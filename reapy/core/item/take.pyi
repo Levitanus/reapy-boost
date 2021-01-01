@@ -240,6 +240,34 @@ class Take(ReapyObject):
         """
         ...
 
+    def get_midi(self,
+                 size: int = 2*1024*1024) -> ty.List[reapy.MIDIEventDict]:
+        """
+        Get all midi data of take in one call.
+
+        Parameters
+        ----------
+        size : int, optional
+            predicted size of event buffer to allocate.
+            For performance is better to set it to something a but bigger
+            than expected buffer size.
+            Event with common midi-message (3-bytes) takes 12 bytes.
+
+        Returns
+        -------
+        List[MIDIEventDict]
+            ppq: int
+            selected: bool
+            muted: bool
+            cc_shape: CCShapeFlag
+            buf: ty.List[int]
+
+        See also
+        --------
+        Take.set_midi
+        """
+        ...
+
     @property
     def guid(self) -> str:
         """Used for communication within other scripts.
@@ -452,6 +480,37 @@ class Take(ReapyObject):
     def set_info_value(self, param_name: str, value: float) -> bool:
         ...
 
+    def set_midi(self,
+                 midi: ty.List[reapy.MIDIEventDict],
+                 start: ty.Optional[float] = None,
+                 unit: str = "seconds",
+                 sort: bool = True) -> None:
+        """
+        Erase all midi from take and build new one from scratch.
+
+        Parameters
+        ----------
+        midi : List[MIDIEventDict]
+            can be taken with `Take.get_midi()` or build from scratch.
+        start : float, optional
+            if offset needed (for example, start from a particular time)
+        unit : str, optional
+            time unit: "seconds"|"beats"|"ppq"
+        sort : bool, optional
+            if sort is needed after insertion
+
+        Raises
+        ------
+        NotImplementedError
+            currently, gaps between events longer than several hours
+            are not supported.
+
+        See also
+        --------
+        Take.get_midi
+        """
+        ...
+
     def sort_events(self) -> None:
         """
         Sort MIDI events on take.
@@ -500,6 +559,15 @@ class Take(ReapyObject):
 
     @start_offset.setter
     def start_offset(self, value: float)->None: ...
+
+    @property
+    def text_sysex_events(self) -> reapy.TextSysexList:
+        """
+        List of text or SysEx events.
+
+        :type: TextSysexList
+        """
+        ...
 
     def time_to_ppq(self, time: float) -> float:
         """
