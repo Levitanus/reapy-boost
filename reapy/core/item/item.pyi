@@ -7,16 +7,16 @@ import typing as ty
 class Item(ReapyObject):
 
     _class_name = "Item"
-    id: int
+    id: str
 
-    def __init__(self, id: int) -> None:
+    def __init__(self, id: str) -> None:
         ...
 
     def __eq__(self, other: object) -> bool:
         ...
 
     @property
-    def _args(self) -> ty.Tuple[int]:
+    def _args(self) -> ty.Tuple[str]:
         ...
 
     @property
@@ -86,6 +86,10 @@ class Item(ReapyObject):
         is_selected : bool
             Whether item is selected.
         """
+        ...
+
+    @is_selected.setter
+    def is_selected(self, value: bool) -> None:
         ...
 
     @property
@@ -160,8 +164,15 @@ class Item(ReapyObject):
         """
         ...
 
-    def set_info_value(self, param_name: str, value: float) -> bool:
-        ...
+    def set_info_value(self, param_name: str, value: float) -> None:
+        """
+        Set raw item info value.
+
+        Parameters
+        ----------
+        param_name : str
+        value : float
+        """
 
     def split(self, position: float) -> ty.Tuple[Item, Item]:
         """

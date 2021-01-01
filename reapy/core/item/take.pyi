@@ -32,7 +32,7 @@ class Take(ReapyObject):
 
     def add_event(self,
                   message: ty.Iterable[int],
-                  position, unit: str = "seconds") -> None:
+                  position: float, unit: str = "seconds") -> None:
         """
         Add generic event to the take at position.
 
@@ -203,7 +203,7 @@ class Take(ReapyObject):
         ...
 
     @property
-    def has_valid_id(self) ->  bool:
+    def has_valid_id(self) -> bool:
         """
         Whether ReaScript ID is still valid.
 
@@ -346,6 +346,9 @@ class Take(ReapyObject):
         """
         ...
 
+    @name.setter
+    def name(self, name: str) -> None: ...
+
     @property
     def notes(self) -> reapy.NoteList:
         """
@@ -483,6 +486,9 @@ class Take(ReapyObject):
         """
         ...
 
+    @source.setter
+    def source(self, source: reapy.Source)->None: ...
+
     @property
     def start_offset(self) -> float:
         """
@@ -491,6 +497,9 @@ class Take(ReapyObject):
         :type: float
         """
         ...
+
+    @start_offset.setter
+    def start_offset(self, value: float)->None: ...
 
     def time_to_ppq(self, time: float) -> float:
         """
