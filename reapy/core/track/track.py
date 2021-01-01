@@ -283,6 +283,48 @@ class Track(ReapyObject):
         """
         return reapy.EnvelopeList(self)
 
+    @classmethod
+    def from_GUID(cls, guid_string, project=None):
+        """
+        Get track from project by GUID string {xyz-...}.
+
+        Parameters
+        ----------
+        guid_string : str
+            can be taken by Track.GUID
+        project : Union[Project, str], optional
+            if None — current project is used
+            if "all" — iterates through all projects (use with care)
+
+        Returns
+        -------
+        Track
+
+        Raises
+        ------
+        KeyError
+            If no track with the guid string found in project
+        """
+        if isinstance(project, str):
+            if project != "all":
+                raise TypeError(
+                    'if used string argument — only "all" is accepted')
+            return cls._from_GUID_all_projects(guid_string)
+        proj = project if project is not None else reapy.Project()
+        return proj.get_track_by_guid(guid_string)
+
+    @classmethod
+    def _from_GUID_all_projects(cls, guid_string):
+        with reapy.inside_reaper():
+            for pr in reapy.get_projects():
+                try:
+                    return pr.get_track_by_guid(guid_string)
+                except (reapy.errors.DistError, KeyError) as e:
+                    if str(e).find('KeyError: {'):
+                        continue
+                    raise e
+            raise KeyError(guid_string)
+
     @property
     def fxs(self):
         """
@@ -303,14 +345,11 @@ class Track(ReapyObject):
     @property
     def GUID(self):
         """
-        Track's GUID.
-
-        16-byte GUID, can query or update.
-        If using a _String() function, GUID is a string {xyz-...}.
+        Track's GUID string {xyz-...}.
 
         :type: str
         """
-        return RPR.GetTrackGUID(self.id)
+        return self.get_info_string("GUID")
 
     @GUID.setter
     def GUID(self, guid_string):
