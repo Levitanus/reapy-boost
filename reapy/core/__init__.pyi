@@ -1,6 +1,5 @@
 from .reapy_object import ReapyObject, ReapyObjectList
 
-from .project import Marker, Project, Region, TimeSelection
 from .audio_accessor import AudioAccessor
 from .envelope import Envelope, EnvelopeList, EnvelopePoint
 from .fx import FX, FXList, FXParam, FXParamsList
@@ -9,6 +8,7 @@ from .item import (Item, MIDIEvent, MIDIEventList, CC, CCList, Note, NoteList,
                    CCShapeFlag, CCShape, MIDIEventDict,
                    MIDIEventInfo, CCInfo, NoteInfo, Source, Take)
 from .track import AutomationItem, Send, Track, TrackList
+from .project import Marker, Project, Region, TimeSelection
 from .window import MIDIEditor, ToolTip, Window
 
 __all__ = [
