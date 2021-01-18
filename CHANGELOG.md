@@ -42,6 +42,12 @@ All notable changes to this project will be documented in this file.
     * note, that all `MIDI_Set*` functions now return only boolean, as it reduced and cleaned the bindings code. Advantage that now they are truly optional.
 
 
+## UNRELEASED
+
+### Added
+
+- `Item.make_only_selected_item` method
+
 ## [0.10.0](https://github.com/RomeoDespres/reapy/releases/tag/0.10.0) - 2020-12-29
 
 ### Added
