@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-### Added
+## Added
 
+- `Marker.infos` and `Region.infos` properties for efficienelly get all properties of marker or region
+- `MarkerInfo` and `RegionInfo` TypedDicts
+- `Marker.name` and `Region.name` properties. Take in a count that these properties use SWS API.
 - Introduced [JS_ReaScriptAPI](https://github.com/juliansader/ReaExtensions):
     * Now it can be installed and connected to the reapy API at the installation
     * All JS_* API calls as well as other API calls from the Julian repo are automatically parced and wrapped. So, Extension is always up to date.

@@ -55,6 +55,8 @@ __all__ = [
     'NoteInfo',
     "Source",
     "Take",
+    "MarkerInfo",
+    "RegionInfo",
     # core.track
     "AutomationItem",
     "Send",

@@ -8,7 +8,9 @@ from .item import (Item, MIDIEvent, MIDIEventList, CC, CCList, Note, NoteList,
                    CCShapeFlag, CCShape, MIDIEventDict,
                    MIDIEventInfo, CCInfo, NoteInfo, Source, Take)
 from .track import AutomationItem, Send, Track, TrackList
-from .project import Marker, Project, Region, TimeSelection
+from .project import (
+    Marker, MarkerInfo, Project, Region, RegionInfo, TimeSelection
+)
 from .window import MIDIEditor, ToolTip, Window
 from .gui import JS_API as JS
 
@@ -48,8 +50,10 @@ __all__ = [
     "Take",
     # core.project
     "Marker",
+    "MarkerInfo",
     "Project",
     "Region",
+    "RegionInfo",
     "TimeSelection",
     # core.track
     "AutomationItem",
