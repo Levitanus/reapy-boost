@@ -65,6 +65,12 @@ __all__ = [
     "MIDIEditor",
     "ToolTip",
     "Window",
+    # core.gui
+    "JS",
+    "Pointer",
+    "VoidPtr",
+    "AudioWriter",
+    "PCM_source",
     # core.reaper
     'add_reascript',
     'arm_command',
