@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## Added
 
+- New API: now every method of `core` classes can be used within `object.map(method_name, iterables, default, pickled_out)`, which allows to significantly increase performance on similar calls from outside. See method doc for details.
 - `Marker.infos` and `Region.infos` properties for efficienelly get all properties of marker or region
 - `MarkerInfo` and `RegionInfo` TypedDicts
 - `Marker.name` and `Region.name` properties. Take in a count that these properties use SWS API.
