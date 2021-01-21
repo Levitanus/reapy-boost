@@ -86,6 +86,16 @@ All notable changes to this project will be documented in this file.
 
 - Markers and Regions now has different indexing system. As Markers and Regions share enum indexes, but has unique user-ID, user-id now is the main `index` of Marker or Region. So, now almost everywhere `Marker.index` or `Region.index` are used as previously. But when You need enum index for using in some raw `RPR.API*` calls — there is `Marker.enum_index` and `Region.enum_index` members.
 
+## Added
+
+- `Project.get_track_by_guid(guid_string: str) -> reapy.Track:`
+- `Track.from_GUID(project: Optional[Union[reapy.Project, str]] = None) -> 'Track':` classmethod for retrieving tracks from any project event after their id changes.
+
+## Changed
+
+- `Track.GUID` property now returns `str` as it is the most stable way to retrieve and compare tracks GUID.
+
+
 ## [0.10.0](https://github.com/RomeoDespres/reapy/releases/tag/0.10.0) - 2020-12-29
 
 ### Added
