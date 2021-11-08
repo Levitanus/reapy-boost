@@ -1,6 +1,16 @@
-# reapy
+# reapy-boost
 
 `reapy` is a nice pythonic wrapper around the quite unpythonic [ReaScript Python API](https://www.reaper.fm/sdk/reascript/reascripthelp.html#p "ReaScript Python API documentation") for [REAPER](https://www.reaper.fm/ "REAPER").
+
+# the boost
+
+This fork started as local copy for working on the repository as contributor. But since I've added a lot of functionality, that is still waits for approval (probably for an infinity), I made this fork to establish my own API.
+
+So, I'll try to keep the fork as consistent as possible with the original repository, but while @RomeoDespres adds some own API which conflicts with API of the fork — they are going aside.
+
+## feel free to contribute!
+
+So, the baseline and base principle of the fork is to be «boosted»: review PRs as fast as possible, and, if they makes what they declare — just put them into the project. It may produce not very consistent codebase and not so clean architecture, but it will produce a stable API that can be used in the projects of contributors.
 
 ## Contents
 
