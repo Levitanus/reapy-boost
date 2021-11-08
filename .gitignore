@@ -7,4 +7,5 @@ python_reapy.egg-info/
 *.sublime-workspace
 *.sublime-project
 
-reapy/core/gui/_JS_API_generated.py
+reapy/core/_JS_API_generated.py
+*.mypy_cache/

@@ -19,7 +19,7 @@ if __name__ == "__main__":
         traceback.print_tb(exc_info()[2], file=stdout)
         print(e)
     reapy.config.enable_dist_api()
-    from reapy.core.gui import _JS_generator
+    from reapy.core import _JS_generator
     api_filename = "_JS_API_generated.py"
     bin_dir = os.path.join(reapy.get_resource_path(), "UserPlugins")
     _JS_generator.generate_js_api(bin_dir, api_filename)
