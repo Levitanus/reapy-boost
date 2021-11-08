@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Introduced [JS_ReaScriptAPI](https://github.com/juliansader/ReaExtensions):
+    * Now it can be installed and connected to the reapy API at the installation
+    * All JS_* API calls as well as other API calls from the Julian repo are automatically parced and wrapped. So, Extension is always up to date.
+    * API can be reached by `reapy.JS` module which should work within Jedi and MyPy
+- New API: now every method of `core` classes can be used within `object.map(method_name, iterables, default)`, which allows to significantly increase performance on similar calls from outside. See method doc for details.
+- API extended with following classes:
+    * `CCShape` and `CCShapeFlag` enums
+    * `TextSysex`, `TextSysexList` classes
+    * `EventInfo`, `CCInfo`, `NoteInfo`, `TextSysexInfo` Typed Dicts
+    * `MidiEventDict` representing unpacked event from event buffer exported by `Take.get_midi` method. Also can be build from scratch.
+- `Take` extended with:
+    * `get_midi(size: Optional[int]) -> List[MIDIEventDict]`, returning all midi data in one call
+    * `set_midi(midi: List[MIDIEventDict], start: Optional[float], unit:str, sort: bool) -> None`, replacing take midi in one call.
+    * `text_sysex_events -> TextSysexList` property.
+- `MIDIEvent` and subclasses extended with:
+    * `as_dict -> List[MIDIEventDict]` property
+- `CC` class extended with `shape -> CCShape` property
+
+### Improved
+
+- `MIDIEvent` and subclasses:
+    * all properties now read-write
+    * `MIDIEvent.set` method now works in every subclass
+    * signature of `MIDIEvent.set` slightly changed for not breaking Libskov-substitution principle. Take our apologize for that.
+    * `MIDIEvent.set` now has True-optional args.
+
+### Fixed
+
+- ReaScript c-bindings for:
+    * `MIDI_GetTextSysexEvt`
+    * `MIDI_SetAllEvts`
+    * `MIDI_GetAllEvts`
+    * `MIDI_SetCCShape`
+    * `MIDI_SetNote`
+    * `MIDI_SetTextSysexEvt`
+    * `MIDI_SetCC`
+    * `MIDI_SetEvt` improved
+    * note, that all `MIDI_Set*` functions now return only boolean, as it reduced and cleaned the bindings code. Advantage that now they are truly optional.
+
+### Cahnged
+
+- Internal logic of importing modules from inside REAPER:
+    * now there is no need to import all members of `reapy.core` package into its `__init__.py`.
+    * If some sub-package (like `reapy.core.gui` or `reapy.core.gui.JS_API`) need to keep the parent namespace clean still be able to be used as from outside as from inside REAPER — it can be added as Separate Cache object in `reapy.tools.json`.
+
 
 ## Unreleased
 

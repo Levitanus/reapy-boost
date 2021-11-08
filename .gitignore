@@ -6,3 +6,6 @@ docs/Makefile
 python_reapy.egg-info/
 *.sublime-workspace
 *.sublime-project
+
+reapy/core/_JS_API_generated.py
+*.mypy_cache/
