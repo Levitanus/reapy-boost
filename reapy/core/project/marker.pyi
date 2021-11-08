@@ -2,6 +2,16 @@ import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
 import typing as ty
+from typing_extensions import TypedDict
+
+
+class MarkerInfo(TypedDict):
+
+    index: int
+    enum_index: int
+    project_id: str
+    position: float
+    name: str
 
 
 class Marker(ReapyObject):
@@ -10,11 +20,13 @@ class Marker(ReapyObject):
     project: reapy.Project
     project_id: int
     index: int
+    enum_index: int
 
     def __init__(self,
                  parent_project: ty.Optional[reapy.Project] = None,
                  index: ty.Optional[int] = None,
-                 parent_project_id: ty.Optional[int] = None):
+                 parent_project_id: ty.Optional[int] = None,
+                 enum_index: ty.Optional[int] = None):
         ...
 
     @reapy.inside_reaper()
@@ -33,6 +45,25 @@ class Marker(ReapyObject):
         Delete marker.
         """
         ...
+
+    @property
+    def name(self) -> str:
+        """
+        Marker name.
+
+        :type: str
+        """
+
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """
+        Set marker name.
+
+        Parameters
+        ----------
+        name : str
+        """
 
     @property
     def position(self) -> float:
@@ -55,5 +86,20 @@ class Marker(ReapyObject):
         ----------
         position : float
             Marker position in seconds.
+        """
+        ...
+
+    @property
+    def infos(self) -> MarkerInfo:
+        """Get all Region infos in one call.
+
+        Returns
+        -------
+        RegionInfo
+            index: int
+            enum_index: int
+            project_id: str
+            position: float
+            name: str
         """
         ...

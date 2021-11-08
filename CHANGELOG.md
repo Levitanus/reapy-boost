@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-### Added
+## Added
 
+- New API: now every method of `core` classes can be used within `object.map(method_name, iterables, default, pickled_out)`, which allows to significantly increase performance on similar calls from outside. See method doc for details.
+- `Marker.infos` and `Region.infos` properties for efficienelly get all properties of marker or region
+- `MarkerInfo` and `RegionInfo` TypedDicts
+- `Marker.name` and `Region.name` properties. Take in a count that these properties use SWS API.
 - Introduced [JS_ReaScriptAPI](https://github.com/juliansader/ReaExtensions):
     * Now it can be installed and connected to the reapy API at the installation
     * All JS_* API calls as well as other API calls from the Julian repo are automatically parced and wrapped. So, Extension is always up to date.
@@ -52,17 +56,40 @@ All notable changes to this project will be documented in this file.
     * If some sub-package (like `reapy.core.gui` or `reapy.core.gui.JS_API`) need to keep the parent namespace clean still be able to be used as from outside as from inside REAPER — it can be added as Separate Cache object in `reapy.tools.json`.
 
 
-## Unreleased
 
 ### Added
 
+- `Item.make_only_selected_item` method
+- `Item.is_selected` setter
+- `Take.name` setter
+- `Take.source` setter
+- `Take.start_offset` setter
+- `EnvelopePoint` TypedDict for easy constructing envelope points.
+- `Envelope.insert_point(point: EnvelopePoint, sort: bool=True) -> bool:` method
+- `Envelope.get_point(index:int) -> EnvelopePoint` method
+- `Envelope.set_point(index: int, point: EnvelopePoint, sort: bool=True) -> bool:` method
+- `Project.loop_points -> Tuple[float, float]` read-write property.
 - [`reapy.map`](https://python-reapy.readthedocs.io/en/latest/reapy.core.html#reapy.core.map) for efficient mapping of `reapy` functions to large iterables of arguments.
+- `Project.get_track_by_guid(guid_string: str) -> reapy.Track:`
+- `Track.from_GUID(project: Optional[Union[reapy.Project, str]] = None) -> 'Track':` classmethod for retrieving tracks from any project event after their id changes.
 
 ### Fixed
 
+- typo in `Item.__init__` stub
+- typo in `Item.set_info_value(self, param_name: str, value: float) -> None:` stub
+- typo in `Take.add_event(message: ty.Iterable[int], position: float, unit: str = "seconds") -> None:` stub
+- `Project.end_undo_block` now has flags. Also it is up to mention, that default flags are not `0` but `-1` as `0` does nothing. Still undo blocks are far way from stable… Probably because of the REAPER limitations.
+- `Project.markers` and `Project.regions` properties are fixed to be capable within new indexing system.
+- `undo_block` defaults fixed to `-1` and docstrings are updated.
+- `reapy.errors.UndefinedMarkerError` and `reapy.errors.UndefinedRegionError`
+- import psutil issue during installation — Since import reapy line is needed only for keeping the version, I've made it directly by file-parcing. Now there is no strict need to import reapy before setuptools make its work.
 - Native ReaScript functions `RPR_MIDI_GetAllEvts`, `RPR_MIDI_GetTextSysexEvt`, `RPR_MIDI_SetAllEvts`, `RPR_MIDI_SetCC`, `RPR_MIDI_SetEvt`, `RPR_MIDI_SetNote` and `RPR_MIDI_SetTextSysexEvt` used to raise errors because they tried to encode MIDI messages as UTF-8. Their counterparts in `reapy.reascript_api` are patched and work as described in the official ReaScript documentation.
 
+### Changed
 
+- Markers and Regions now has different indexing system. As Markers and Regions share enum indexes, but has unique user-ID, user-id now is the main `index` of Marker or Region. So, now almost everywhere `Marker.index` or `Region.index` are used as previously. But when You need enum index for using in some raw `RPR.API*` calls — there is `Marker.enum_index` and `Region.enum_index` members.
+- `Track.GUID` property now returns `str` as it is the most stable way to retrieve and compare tracks GUID.
+## UNRELEASED
 ## [0.10.0](https://github.com/RomeoDespres/reapy/releases/tag/0.10.0) - 2020-12-29
 
 ### Added

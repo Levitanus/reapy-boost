@@ -396,6 +396,25 @@ class Project(ReapyObject):
         """
         ...
 
+    def get_track_by_guid(self, guid_string: str) -> reapy.Track:
+        """
+        Get track with giver GUID string {xyz-...}.
+
+        Parameters
+        ----------
+        guid_string : str
+
+        Returns
+        -------
+        Track
+
+        Raises
+        ------
+        KeyError
+            If no track with the guid string found in project
+        """
+        ...
+
     def glue_items(self, within_time_selection: bool = False) -> None:
         """
         Glue items (action shortcut).
@@ -511,6 +530,12 @@ class Project(ReapyObject):
         "Volume"
         """
         ...
+
+    @property
+    def loop_points(self) -> ty.Tuple[float, float]: ...
+
+    @loop_points.setter
+    def loop_points(self, points: ty.Tuple[float, float])->None: ...
 
     def make_current_project(self) -> ty.ContextManager[None]:
         """
@@ -642,7 +667,7 @@ class Project(ReapyObject):
         """
         ...
 
-    def open(self, in_new_tab:bool=False) -> None:
+    def open(self, in_new_tab: bool = False) -> None:
         """
         Open project, if it was closed by Project.close.
 

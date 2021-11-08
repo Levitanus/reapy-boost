@@ -116,7 +116,7 @@ class Project(ReapyObject):
         marker_id = RPR.AddProjectMarker2(
             self.id, False, position, 0, name, -1, color
         )
-        marker = reapy.Marker(self, marker_id)
+        marker = reapy.Marker(self, index=marker_id)
         return marker
 
     def add_region(self, start, end, name="", color=0):
@@ -145,7 +145,7 @@ class Project(ReapyObject):
         region_id = RPR.AddProjectMarker2(
             self.id, True, start, end, name, -1, color
         )
-        region = reapy.Region(self, region_id)
+        region = reapy.Region(self, index=region_id)
         return region
 
     @reapy.inside_reaper()
@@ -340,7 +340,7 @@ class Project(ReapyObject):
         with self.make_current_project():
             RPR.ClearAllRecArmed()
 
-    def end_undo_block(self, description=""):
+    def end_undo_block(self, description="", flags: int = -1):
         """
         End undo block.
 
@@ -348,8 +348,14 @@ class Project(ReapyObject):
         ----------
         description : str
             Undo block description.
+        flags : int
+            1: track configurations
+            2: track FX
+            4: track items
+            8: project states
+            16: freeze states
         """
-        RPR.Undo_EndBlock2(self.id, description, 0)
+        RPR.Undo_EndBlock2(self.id, description, flags)
 
     @reapy.inside_reaper()
     @property
@@ -494,6 +500,29 @@ class Project(ReapyObject):
         track_id = RPR.GetSelectedTrack(self.id, index)
         track = reapy.Track(track_id)
         return track
+
+    @reapy.inside_reaper()
+    def get_track_by_guid(self, guid_string):
+        """
+        Get track with giver GUID string {xyz-...}.
+
+        Parameters
+        ----------
+        guid_string : str
+
+        Returns
+        -------
+        Track
+
+        Raises
+        ------
+        KeyError
+            If no track with the guid string found in project
+        """
+        for tr in self.tracks:
+            if guid_string == tr.GUID:
+                return tr
+        raise KeyError(guid_string)
 
     def get_ext_state(self, section, key, pickled=False):
         """
@@ -654,6 +683,17 @@ class Project(ReapyObject):
                 fx, index = track.fxs[res[2]], res[3]
         return fx, index
 
+    @property
+    def loop_points(self):
+        _, _, _, startOut, endOut, _ = RPR.GetSet_LoopTimeRange2(
+            self.id, False, False, False, False, False)
+        return startOut, endOut
+
+    @loop_points.setter
+    def loop_points(self, points):
+        RPR.GetSet_LoopTimeRange2(
+            self.id, True, True, points[0], points[1], False)
+
     def make_current_project(self):
         """
         Set project as current project.
@@ -691,7 +731,8 @@ class Project(ReapyObject):
             RPR.EnumProjectMarkers2(self.id, i, 0, 0, 0, 0, 0)
             for i in range(self.n_regions + self.n_markers)
         ]
-        return [reapy.Marker(self, i[0]) for i in ids if not i[3]]
+        return [reapy.Marker(self, index=i[7], enum_index=i[0]-1)
+                for i in ids if not i[3]]
 
     @property
     def master_track(self):
@@ -912,7 +953,8 @@ class Project(ReapyObject):
             RPR.EnumProjectMarkers2(self.id, i, 0, 0, 0, 0, 0)
             for i in range(self.n_regions + self.n_markers)
         ]
-        return [reapy.Region(self, i[0]) for i in ids if i[3]]
+        return [reapy.Region(self, index=i[7],
+                enum_index=i[0]-1) for i in ids if i[3]]
 
     def save(self, force_save_as=False):
         """

@@ -433,6 +433,10 @@ class Take(ReapyObject):
             return RPR.GetTakeName(self.id)
         return ""
 
+    @name.setter
+    def name(self, name):
+        RPR.GetSetMediaItemTakeInfo_String(self.id, "P_NAME", name, True)
+
     @property
     def notes(self):
         """
@@ -646,6 +650,10 @@ class Take(ReapyObject):
         """
         return reapy.Source(RPR.GetMediaItemTake_Source(self.id))
 
+    @source.setter
+    def source(self, source):
+        RPR.SetMediaItemTake_Source(self.id, source.id)
+
     @property
     def start_offset(self):
         """
@@ -654,6 +662,10 @@ class Take(ReapyObject):
         :type: float
         """
         return self.get_info_value("D_STARTOFFS")
+
+    @start_offset.setter
+    def start_offset(self, value):
+        self.set_info_value("D_STARTOFFS", value)
 
     @property
     def text_sysex_events(self):

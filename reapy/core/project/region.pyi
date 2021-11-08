@@ -2,6 +2,17 @@ import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
 import typing as ty
+from typing_extensions import TypedDict
+
+
+class RegionInfo(TypedDict):
+    index: int
+    enum_index: int
+    project_id: str
+    name: str
+    start: float
+    end: float
+    rendered_tracks: ty.List['reapy.Track']
 
 
 class Region(ReapyObject):
@@ -9,21 +20,27 @@ class Region(ReapyObject):
     _class_name = "Region"
     project_id: int
     index: int
+    enum_index: int
 
     def __init__(self,
                  parent_project: ty.Optional[reapy.Project] = None,
                  index: ty.Optional[int] = None,
-                 parent_project_id: ty.Optional[int] = None) -> None:
+                 parent_project_id: ty.Optional[int] = None,
+                 enum_index: ty.Optional[int] = None) -> None:
         ...
 
     def _get_enum_index(self) -> int:
         """
         Return region index as needed by RPR.EnumProjectMarkers2.
+
+        Raises
+        ------
+        reapy.errors.UndefinedRegionError
         """
         ...
 
     @property
-    def _kwargs(self) -> ty.Dict[str, int]:
+    def _kwargs(self) -> ty.Dict[str, ty.Union[str, int]]:
         ...
 
     def add_rendered_track(self, track: reapy.Track) -> None:
@@ -87,6 +104,24 @@ class Region(ReapyObject):
         """
         ...
 
+    @property
+    def name(self) -> str:
+        """
+        Region name.
+
+        :type: str
+        """
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """
+        Set region name.
+
+        Parameters
+        ----------
+        name : str
+        """
+
     def remove_rendered_track(self, track: reapy.Track) -> None:
         """
         Remove track from region render matrix for this region.
@@ -147,5 +182,22 @@ class Region(ReapyObject):
         ----------
         start : float
             region start in seconds.
+        """
+        ...
+
+    @property
+    def infos(self) -> RegionInfo:
+        """Get all Region infos in one call.
+
+        Returns
+        -------
+        RegionInfo
+            index: int
+            enum_index: int
+            project_id: str
+            name: str
+            start: float
+            end: float
+            rendered_tracks: List[reapy.Track]
         """
         ...

@@ -1,6 +1,18 @@
+from typing_extensions import TypedDict
+from typing import List
 import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
+
+
+class RegionInfo(TypedDict):
+    index: int
+    enum_index: int
+    project_id: str
+    name: str
+    start: float
+    end: float
+    rendered_tracks: List['reapy.Track']
 
 
 class Region(ReapyObject):
@@ -8,7 +20,8 @@ class Region(ReapyObject):
     _class_name = "Region"
 
     def __init__(
-        self, parent_project=None, index=None, parent_project_id=None
+        self, parent_project=None, index=None,
+        parent_project_id=None, enum_index=None
     ):
         if parent_project_id is None:
             message = (
@@ -17,23 +30,40 @@ class Region(ReapyObject):
             )
             assert parent_project is not None, message
             parent_project_id = parent_project.id
+        self.project = reapy.Project(parent_project_id)
         self.project_id = parent_project_id
+        if index is None:
+            if enum_index is None:
+                index = self.project.n_regions
+            else:
+                index = RPR.EnumProjectMarkers2(
+                    self.project_id, enum_index, 0, 0, 0, 0, 0
+                )[7]
         self.index = index
+        if enum_index is None:
+            self.enum_index = None
+            enum_index = self._get_enum_index()
+        self.enum_index = enum_index
 
     @reapy.inside_reaper()
     def _get_enum_index(self):
         """
         Return region index as needed by RPR.EnumProjectMarkers2.
+
+        Raises
+        ------
+        reapy.errors.UndefinedRegionError
         """
-        return next(
-            i for i, r in enumerate(reapy.Project(self.project_id).regions)
-            if r.index == self.index
-        )
+        for region in self.project.regions:
+            if region.index == self.index:
+                return region.enum_index
+        raise reapy.errors.UndefinedRegionError(self.index)
 
     @property
     def _kwargs(self):
         return {
-            "index": self.index, "parent_project_id": self.project_id
+            "index": self.index, "parent_project_id": self.project_id,
+            "enum_index": self.enum_index
         }
 
     def add_rendered_track(self, track):
@@ -94,7 +124,7 @@ class Region(ReapyObject):
         end : float
             region end in seconds.
         """
-        args = self.project_id, self.index, True, self.start, end, ""
+        args = self.project_id, self.index, True, self.start, end, self.name
         RPR.SetProjectMarker2(*args)
 
     def delete(self):
@@ -102,6 +132,34 @@ class Region(ReapyObject):
         Delete region.
         """
         RPR.DeleteProjectMarker(self.project_id, self.index, True)
+
+    @reapy.inside_reaper()
+    @property
+    def name(self):
+        """
+        Region name.
+
+        :type: str
+        """
+        # index = self._get_enum_index()
+        fs = RPR.SNM_CreateFastString('0' * 1024)
+        args = self.project_id, self.index, True, fs
+        RPR.SNM_GetProjectMarkerName(*args)
+        result = RPR.SNM_GetFastString(fs)
+        RPR.SNM_DeleteFastString(fs)
+        return result
+
+    @name.setter
+    def name(self, name):
+        """
+        Set region name.
+
+        Parameters
+        ----------
+        name : str
+        """
+        args = self.project_id, self.index, True, self.start, self.end, name
+        RPR.SetProjectMarker2(*args)
 
     def remove_rendered_track(self, track):
         """
@@ -178,5 +236,35 @@ class Region(ReapyObject):
             region start in seconds.
         """
         RPR.SetProjectMarker2(
-            self.project_id, self.index, 1, start, self.end, ""
+            self.project_id, self.index, 1, start, self.end, self.name
         )
+
+    @reapy.inside_reaper()
+    @property
+    def infos(self):
+        """Get all Region infos in one call.
+
+        Returns
+        -------
+        RegionInfo
+            index: int
+            enum_index: int
+            project_id: str
+            name: str
+            start: float
+            end: float
+            rendered_tracks: List[reapy.Track]
+        """
+        enum_index = self._get_enum_index()
+        args = self.project_id, enum_index, 0, 0, 0, 0, 0
+        _, _, _, _, start, end, _, index = RPR.EnumProjectMarkers2(*args)
+        out: RegionInfo = {
+            'index': index,
+            'enum_index': enum_index,
+            'project_id': self.project_id,
+            'start': start,
+            'end': end,
+            'name': self.name,
+            'rendered_tracks': self.rendered_tracks
+        }
+        return out
