@@ -21,52 +21,126 @@ def is_inside_reaper():
             return True
 
 
-
 from .tools import (
     connect, connect_to_default_machine, dist_api_is_enabled, inside_reaper,
     reconnect
 )
 from . import reascript_api
 from .config import configure_reaper
-from .core import (
-    # from .reapy_object
-    ReapyObject,
-    ReapyObjectList,
-    # from .project
-    Marker,
-    Project,
-    Region,
-    TimeSelection,
-    # from .audio_accessor
-    AudioAccessor,
-    # from .envelope
-    Envelope,
-    EnvelopeList,
-    EnvelopePoint,
-    # from .fx
-    FX,
-    FXList,
-    FXParam,
-    FXParamsList,
-    # from .item
-    CC,
-    CCList,
-    Item,
-    Note,
-    NoteList,
-    Source,
-    Take,
-    # from .track
-    AutomationItem,
-    Send,
-    Track,
-    TrackList,
-    # from .window
-    MIDIEditor,
-    ToolTip,
-    Window,
-)
+from .core import *
 from .core.reaper import *
 
-
 __version__ = "0.10.0"
+
+__all__ = [
+    "is_inside_reaper",
+    "connect",
+    "connect_to_default_machine",
+    "dist_api_is_enabled",
+    "inside_reaper",
+    "reconnect",
+    "reascript_api",
+    "configure_reaper",
+    # core.reapy_object
+    "ReapyObject",
+    "ReapyObjectList",
+    # core.audio_accessor
+    "AudioAccessor",
+    # core.envelope
+    "Envelope",
+    "EnvelopeList",
+    "EnvelopePoint",
+    # core.fx
+    "FX",
+    "FXList",
+    "FXParam",
+    "FXParamsList",
+    # core.item
+    "Item",
+    "MIDIEvent",
+    "MIDIEventList",
+    "CC",
+    "CCList",
+    "Note",
+    "NoteList",
+    "TextSysex",
+    "TextSysexInfo",
+    "TextSysexList",
+    "CCShapeFlag",
+    "CCShape",
+    "MIDIEventDict",
+    "MIDIEventInfo",
+    "CCInfo",
+    'NoteInfo',
+    "Source",
+    "Take",
+    # core.map
+    "map",
+    # core.project
+    "Marker",
+    "MarkerInfo",
+    "Project",
+    "Region",
+    "RegionInfo",
+    "TimeSelection",
+    # core.track
+    "AutomationItem",
+    "Send",
+    "Track",
+    "TrackList",
+    # core.window
+    "MIDIEditor",
+    "ToolTip",
+    "Window",
+    # JS_API
+    "JS",
+    # core.reaper
+    'add_reascript',
+    'arm_command',
+    'browse_for_file',
+    'clear_console',
+    'clear_peak_cache',
+    'close_project_tab',
+    'dB_to_slider',
+    'delete_ext_state',
+    'disarm_command',
+    'get_armed_command',
+    'get_command_id',
+    'get_command_name',
+    'get_exe_dir',
+    'get_ext_state',
+    'get_global_automation_mode',
+    'get_ini_file',
+    'get_last_touched_track',
+    'get_main_window',
+    'get_projects',
+    'get_reaper_version',
+    'get_resource_path',
+    'get_user_inputs',
+    'has_ext_state',
+    'new_project_tab',
+    'open_project',
+    'perform_action',
+    'prevent_ui_refresh',
+    'print',
+    'reaprint',
+    'remove_reascript',
+    'rgb_from_native',
+    'rgb_to_native',
+    'set_ext_state',
+    'set_global_automation_mode',
+    'show_console_message',
+    'show_message_box',
+    'slider_to_dB',
+    'test_api',
+    'undo_block',
+    'update_arrange',
+    'update_timeline',
+    'view_prefs',
+    'validate_id',
+    'audio',
+    'midi',
+    'ui',
+    'defer',
+    'at_exit',
+]

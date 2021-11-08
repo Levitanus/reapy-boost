@@ -14,7 +14,6 @@ from reapy import inside_reaper
 if is_inside_reaper():
     from reapy.reascript_api import _RPR
 
-
 MAX_STRBUF = 4 * 1024 * 1024
 
 
@@ -40,7 +39,7 @@ def packp(t: str, v: ty.Union[int, str]) -> int:
         (_t, _v) = m.groups()
         a = int(_v[:8], 16)
         if (_t == t or t == 'void*'):
-            b = int(_v[8:], 16);
+            b = int(_v[8:], 16)
             p = ct.c_uint64((a << 32) | b).value
             return p
     return 0
@@ -68,12 +67,15 @@ def unpackp(t: str, v: ty.Optional[int]) -> str:
     b = int(v & 0xFFFFFFFF)
     return '(%s)0x%08X%08X' % (t, a, b)
 
-def unpacks_l(v,  encoding="latin-1", want_raw=False):
+
+def unpacks_l(v, encoding="latin-1", want_raw=False):
     s = v.value if not want_raw else v.raw
     return str(s.decode(encoding))
 
+
 if is_inside_reaper():
     _RPR.rpr_packp = packp
+
 
 def packs_l(v: str, encoding="latin-1", size=MAX_STRBUF):
     return ct.create_string_buffer(str(v).encode(encoding), size)
@@ -125,12 +127,11 @@ def MIDI_GetAllEvts(take, bufNeedBig, bufNeedBig_sz):
 
 def MIDI_GetHash(p0, p1, p2, p3):
     a = _RPR._ft["MIDI_GetHash"]
-    f = ct.CFUNCTYPE(
-        ct.c_byte, ct.c_uint64, ct.c_byte,  ct.c_char_p, ct.c_int
-    )(a)
+    f = ct.CFUNCTYPE(ct.c_byte, ct.c_uint64, ct.c_byte, ct.c_char_p,
+                     ct.c_int)(a)
     t = (
-        _RPR.rpr_packp("MediaItem_Take*", p0), ct.c_byte(p1), packs_l(p2),
-        ct.c_int(p3)
+        _RPR.rpr_packp("MediaItem_Take*",
+                       p0), ct.c_byte(p1), packs_l(p2), ct.c_int(p3)
     )
     r = f(*t)
     return r, p0, p1, unpacks_l(t[2]), p3
@@ -163,12 +164,11 @@ def MIDI_GetTextSysexEvt(p0, p1, p2, p3, p4, p5, p6, p7):
 
 def MIDI_GetTrackHash(p0, p1, p2, p3):
     a = _RPR._ft["MIDI_GetTrackHash"]
-    f = ct.CFUNCTYPE(
-        ct.c_byte, ct.c_uint64, ct.c_byte, ct.c_char_p, ct.c_int
-    )(a)
+    f = ct.CFUNCTYPE(ct.c_byte, ct.c_uint64, ct.c_byte, ct.c_char_p,
+                     ct.c_int)(a)
     t = (
-        _RPR.rpr_packp("MediaTrack*", p0), ct.c_byte(p1), packs_l(p2),
-        ct.c_int(p3)
+        _RPR.rpr_packp("MediaTrack*",
+                       p0), ct.c_byte(p1), packs_l(p2), ct.c_int(p3)
     )
     r = f(*t)
     return r, p0, p1, unpacks_l(t[2]), p3
@@ -181,11 +181,8 @@ def MIDI_InsertEvt(take, selected, muted, ppqpos, bytestr, bytestr_sz):
         ct.c_int
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_byte(selected),
-        ct.c_byte(muted),
-        ct.c_double(ppqpos),
-        packs_l(bytestr),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_byte(selected),
+        ct.c_byte(muted), ct.c_double(ppqpos), packs_l(bytestr),
         ct.c_int(bytestr_sz)
     )
 
@@ -199,13 +196,9 @@ def MIDI_InsertTextSysexEvt(
         ct.c_char_p, ct.c_int
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_byte(selected),
-        ct.c_byte(muted),
-        ct.c_double(ppqpos),
-        ct.c_int(type_),
-        packs_l(bytestr),
-        ct.c_int(bytestr_sz)
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_byte(selected),
+        ct.c_byte(muted), ct.c_double(ppqpos), ct.c_int(type_),
+        packs_l(bytestr), ct.c_int(bytestr_sz)
     )
 
 
@@ -213,8 +206,7 @@ def MIDI_SetAllEvts(take, buf, buf_sz):
     a = _RPR._ft["MIDI_SetAllEvts"]
     f = ct.CFUNCTYPE(ct.c_byte, ct.c_uint64, ct.c_char_p, ct.c_int)(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        packs_l(buf, size=buf_sz),
+        _RPR.rpr_packp("MediaItem_Take*", take), packs_l(buf, size=buf_sz),
         ct.c_int(buf_sz)
     )
 
@@ -229,8 +221,7 @@ def MIDI_SetCC(
         ct.c_void_p
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_int(ccidx),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_int(ccidx),
         None if selected is None else ct.byref(ct.c_byte(selected)),
         None if muted is None else ct.byref(ct.c_byte(muted)),
         None if ppqpos is None else ct.byref(ct.c_double(ppqpos)),
@@ -248,10 +239,8 @@ def MIDI_SetCCShape(take, ccidx, shape, beiz_tens, no_sort):
         ct.c_byte, ct.c_uint64, ct.c_int, ct.c_int, ct.c_double, ct.c_void_p
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_int(ccidx),
-        ct.c_int(shape),
-        ct.c_double(beiz_tens),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_int(ccidx),
+        ct.c_int(shape), ct.c_double(beiz_tens),
         None if no_sort is None else ct.byref(ct.c_byte(no_sort))
     )
 
@@ -263,8 +252,7 @@ def MIDI_SetEvt(take, evt_idx, selected, muted, ppqpos, msg, msg_sz, no_sort):
         ct.c_void_p, ct.c_char_p, ct.c_int, ct.c_void_p
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_int(evt_idx),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_int(evt_idx),
         None if selected is None else ct.byref(ct.c_byte(selected)),
         None if muted is None else ct.byref(ct.c_byte(muted)),
         None if ppqpos is None else ct.byref(ct.c_double(ppqpos)),
@@ -285,8 +273,7 @@ def MIDI_SetNote(
         ct.c_void_p
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_int(idx),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_int(idx),
         None if selected is None else ct.byref(ct.c_byte(selected)),
         None if muted is None else ct.byref(ct.c_byte(muted)),
         None if startppqpos is None else ct.byref(ct.c_double(startppqpos)),
@@ -307,8 +294,7 @@ def MIDI_SetTextSysexEvt(
         ct.c_void_p, ct.c_void_p, ct.c_char_p, ct.c_int, ct.c_void_p
     )(a)
     return f(
-        _RPR.rpr_packp("MediaItem_Take*", take),
-        ct.c_int(idx),
+        _RPR.rpr_packp("MediaItem_Take*", take), ct.c_int(idx),
         None if selected is None else ct.byref(ct.c_byte(selected)),
         None if muted is None else ct.byref(ct.c_byte(muted)),
         None if ppqpos is None else ct.byref(ct.c_double(ppqpos)),
@@ -319,7 +305,7 @@ def MIDI_SetTextSysexEvt(
     )
 
 
-@reapy.inside_reaper()
+@inside_reaper()
 def ValidatePtr2(p0, p1, p2):
     a = _RPR._ft["ValidatePtr2"]
     f = ct.CFUNCTYPE(ct.c_byte, ct.c_uint64, ct.c_uint64, ct.c_char_p)(a)
