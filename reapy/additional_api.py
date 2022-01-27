@@ -68,11 +68,6 @@ def unpackp(t: str, v: ty.Optional[int]) -> str:
     return '(%s)0x%08X%08X' % (t, a, b)
 
 
-def unpacks_l(v, encoding="latin-1", want_raw=False):
-    s = v.value if not want_raw else v.raw
-    return str(s.decode(encoding))
-
-
 if is_inside_reaper():
     _RPR.rpr_packp = packp
 
