@@ -5,6 +5,7 @@ import builtins
 import json
 import platform as plt
 import os
+import warnings
 import requests
 import typing_extensions as te
 
@@ -42,12 +43,13 @@ def write_binary_file(target_dir: str) -> None:
     r = requests.get(url)
     tree = json.loads(r.content)
     name = ''
+
     for item in tree:
         if item['name'] > name:
             name = item['name']
             bindir = item
-
     r = requests.get(bindir['_links']['self'])
+
     tree = json.loads(r.content)
 
     ext_need = {
@@ -58,11 +60,18 @@ def write_binary_file(target_dir: str) -> None:
         ('Darwin', '32bit'): '32.dylib',
     }
     ext_real = plt.system(), plt.architecture()[0]
-
+    bin_url, bin_name = '', ''
     for item in tree:
         if item['name'].endswith(ext_need[ext_real]):
             bin_url = item['download_url']
             bin_name = item['name']
+    if not bin_url:
+        warnings.warn(
+            'binary release not found:' +
+            ' sometimes Julian forgets about your platform.' +
+            "don't worry and install it via ReaPack"
+        )
+        return
     r = requests.get(bin_url)
 
     with open(
