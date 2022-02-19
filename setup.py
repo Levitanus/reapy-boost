@@ -18,20 +18,20 @@ def find_stubs(package: str) -> Dict[str, List[str]]:
     return {package: stubs}
 
 
-with open(path.join(here, 'reapy', '__init__.py')) as f:
+with open(path.join(here, 'reapy_boost', '__init__.py')) as f:
     for line in f.readlines():
         line = line.strip()
         if line.startswith('__version__'):
             version = line.split('"')[1]
 
 setup(
-    name="python-reapy",
+    name="reapy-boost",
     version=version,
     description="A pythonic wrapper for REAPER's ReaScript Python API",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="Roméo Després",
-    author_email="mail.reapy@gmail.com",
+    author="Roméo Després, forked by Levitanus",
+    author_email="pianoist@ya.ru",
     license="MIT",
     classifiers=[
         "License :: OSI Approved :: MIT License",
@@ -39,10 +39,9 @@ setup(
     ],
     keywords="REAPER DAW ReaScript API wrapper music audio",
     packages=find_packages(exclude=["docs"]),
-    package_data=find_stubs('reapy'),
+    package_data=find_stubs('reapy_boost'),
     install_requires=[
         'psutil',
-        'typing_extensions'
     ],
-    python_requires=">=3.0"
+    python_requires=">=3.7"
 )

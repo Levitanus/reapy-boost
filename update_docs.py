@@ -2,15 +2,14 @@
 Build ``docs/source/api_table.rst`` from ``docs/api.json``.
 """
 
-import reapy
-import reapy.core
+import reapy_boost
+import reapy_boost.core
 
 from collections import defaultdict
 import inspect
 import json
 import os
 from sphinx.cmd.build import build_main as sphinx_build_cmd
-
 
 HEADER = """
 Translation Table
@@ -80,7 +79,7 @@ def get_group_contents(group):
 def get_group_string(group_name, group):
     contents = get_group_contents(group)
     return "{}\n{}\n\n{}\n\n".format(
-        group_name, "-"*len(group_name), contents
+        group_name, "-" * len(group_name), contents
     )
 
 
