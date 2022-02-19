@@ -1,3 +1,4 @@
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union
 import reapy
 import reapy.reascript_api as RPR
 from reapy.core import ReapyObject, ReapyObjectList
@@ -5,19 +6,21 @@ from reapy.errors import DistError
 
 
 class FXParam(float):
-
     """FX parameter."""
 
-    def __init__(self, value, parent_list, index, functions):
+    def __init__(
+        self, value: float, parent_list: 'FXParamsList', index: int,
+        functions: Dict[str, Dict[str, Callable[..., Any]]]
+    ) -> None:
         float.__init__(value)
         self.parent_list = parent_list
         self.index = index
         self.functions = functions
 
-    def __new__(self, value, *args, **kwargs):
+    def __new__(self, value: float, *args: Any, **kwargs: Any) -> 'FXParam':
         return float.__new__(self, value)
 
-    def add_envelope(self):
+    def add_envelope(self) -> 'reapy.Envelope':
         """
         Create envelope for the parameter and return it.
 
@@ -33,16 +36,16 @@ class FXParam(float):
         parent_fx = self.parent_list.parent_fx
         parent = parent_fx.parent
         if isinstance(parent, reapy.Track):
-            callback = RPR.GetFXEnvelope
+            callback = RPR.GetFXEnvelope  # type:ignore
         else:  # Then it is a Take
             callback = self.functions["GetEnvelope"]
-        envelope = reapy.Envelope(parent, callback(
-            parent.id, parent_fx.index, self.index, True
-        ))
+        envelope = reapy.Envelope(
+            parent, callback(parent.id, parent_fx.index, self.index, True)
+        )
         return envelope
 
     @property
-    def envelope(self):
+    def envelope(self) -> Optional['reapy.Envelope']:
         """
         Parameter envelope (or None if it doesn't exist).
 
@@ -51,17 +54,17 @@ class FXParam(float):
         parent_fx = self.parent_list.parent_fx
         parent = parent_fx.parent
         if isinstance(parent, reapy.Track):
-            callback = RPR.GetFXEnvelope
+            callback = RPR.GetFXEnvelope  # type:ignore
         else:  # Then it is a Take
             callback = self.functions["GetEnvelope"]
-        envelope = reapy.Envelope(parent, callback(
-            parent.id, parent_fx.index, self.index, False
-        ))
+        envelope = reapy.Envelope(
+            parent, callback(parent.id, parent_fx.index, self.index, False)
+        )
         if not envelope._is_defined:
             envelope = None
         return envelope
 
-    def format_value(self, value):
+    def format_value(self, value: float) -> str:
         """
         Return human readable string for value.
 
@@ -86,7 +89,7 @@ class FXParam(float):
         )[5]
 
     @property
-    def formatted(self):
+    def formatted(self) -> str:
         """
         Human readable string for parameter value.
 
@@ -101,7 +104,7 @@ class FXParam(float):
         )[4]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Parameter name.
 
@@ -114,7 +117,7 @@ class FXParam(float):
         return name
 
     @property
-    def normalized(self):
+    def normalized(self) -> float:
         """
         Normalized FX parameter.
 
@@ -150,13 +153,13 @@ class FXParam(float):
         20.0, 1.0
         """
         min, max = self.range
-        value = (self - min)/(max - min)
+        value = (self - min) / (max - min)
         return NormalizedFXParam(
             value, self.parent_list, self.index, self.functions
         )
 
     @normalized.setter
-    def normalized(self, value):
+    def normalized(self, value: float) -> None:
         parent_fx = self.parent_list.parent_fx
         parent = parent_fx.parent
         self.functions["SetParamNormalized"](
@@ -164,21 +167,20 @@ class FXParam(float):
         )
 
     @property
-    def range(self):
+    def range(self) -> Tuple[float, float]:
         """
         Parameter range.
 
         :type: float, float
         """
         parent_list = self.parent_list
-        min, max = self.functions["GetParam"](
+        min_, max_ = self.functions["GetParam"](
             parent_list.parent_id, parent_list.fx_index, self.index, 0, 0
         )[-2:]
-        return min, max
+        return min_, max_
 
 
 class FXParamsList(ReapyObjectList):
-
     """
     Container class for a list of FX parameters.
 
@@ -197,15 +199,18 @@ class FXParamsList(ReapyObjectList):
     """
 
     def __init__(
-        self, parent_fx=None, parent_id=None, parent_fx_index=None
-    ):
+        self,
+        parent_fx: Optional[reapy.FX] = None,
+        parent_id: Optional[str] = None,
+        parent_fx_index: Optional[int] = None
+    ) -> None:
         if parent_fx is None:
             parent_fx = reapy.FX(parent_id=parent_id, index=parent_fx_index)
         self.parent_id = parent_fx.parent_id
         self.fx_index = parent_fx.index
         self.functions = parent_fx.functions
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: Union[str, int]) -> FXParam:
         with reapy.inside_reaper():
             if isinstance(i, str):
                 i = self._get_param_index(i)
@@ -221,15 +226,15 @@ class FXParamsList(ReapyObjectList):
         param = FXParam(value, self, i, self.functions)
         return param
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[FXParam]:
         for i, value in enumerate(self._get_values()):
             yield FXParam(value, self, i, self.functions)
 
-    def __len__(self):
+    def __len__(self) -> int:
         length = self.parent_fx.n_params
         return length
 
-    def __setitem__(self, i, value):
+    def __setitem__(self, i: Union[str, int], value: float) -> None:
         with reapy.inside_reaper():
             if isinstance(i, str):
                 i = self._get_param_index(i)
@@ -239,12 +244,10 @@ class FXParamsList(ReapyObjectList):
                     "{} has only {} params".format(self.parent_fx, n_params)
                 )
             i = i % n_params  # Allows for negative values
-        self.functions["SetParam"](
-            self.parent_id, self.fx_index, i, value
-        )
+        self.functions["SetParam"](self.parent_id, self.fx_index, i, value)
 
     @reapy.inside_reaper()
-    def _get_param_index(self, name):
+    def _get_param_index(self, name: str) -> int:
         try:
             return [fx.name for fx in self].index(name)
         except ValueError:
@@ -253,22 +256,19 @@ class FXParamsList(ReapyObjectList):
             )
 
     @reapy.inside_reaper()
-    def _get_values(self):
+    def _get_values(self) -> List[float]:
         """Return values of all parameters in self."""
         return [
-            self.functions["GetParam"](
-                self.parent_id, self.fx_index, i, 0, 0
-            )[0] for i in range(len(self))
+            self.functions["GetParam"](self.parent_id, self.fx_index, i, 0,
+                                       0)[0] for i in range(len(self))
         ]
 
     @property
-    def _kwargs(self):
-        return {
-            "parent_fx_index": self.fx_index, "parent_id": self.parent_id
-        }
+    def _kwargs(self) -> Dict[str, Union[int, str]]:
+        return {"parent_fx_index": self.fx_index, "parent_id": self.parent_id}
 
     @property
-    def parent_fx(self):
+    def parent_fx(self) -> 'reapy.FX':
         """
         Parent FX.
 
@@ -279,7 +279,6 @@ class FXParamsList(ReapyObjectList):
 
 
 class NormalizedFXParam(FXParam):
-
     """
     Normalized FX parameter.
 
@@ -297,7 +296,7 @@ class NormalizedFXParam(FXParam):
     (0.0, 1.0)
     """
 
-    def format_value(self, value):
+    def format_value(self, value: float) -> str:
         """
         Return human readable string for value.
 
@@ -322,14 +321,14 @@ class NormalizedFXParam(FXParam):
         )[5]
 
     @property
-    def range(self):
+    def range(self) -> Tuple[float, float]:
         """
         Parameter range (always equal to (0.0, 1.0)).
         """
         return (0.0, 1.0)
 
     @property
-    def raw(self):
+    def raw(self) -> 'FXParam':
         """
         Raw (i.e. unnormalized) parameter.
 

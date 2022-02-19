@@ -9,3 +9,5 @@ python_reapy.egg-info/
 
 reapy/core/_JS_API_generated.py
 *.mypy_cache/
+
+reapy/ImGui.py

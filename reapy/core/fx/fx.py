@@ -1,5 +1,6 @@
 """Define FX and FXParam classes."""
 
+from typing import List, Optional, Tuple, Union, cast, overload
 import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject, ReapyObjectList
@@ -7,7 +8,6 @@ from reapy.errors import DistError, UndefinedFXParamError
 
 
 class FX(ReapyObject):
-
     """FX on a Track or a Take."""
 
     _class_name = "FX"
@@ -20,18 +20,20 @@ class FX(ReapyObject):
         for prefix in ("TrackFX_", "TakeFX_")
     }
 
-    def __init__(self, parent=None, index=None, parent_id=None):
-        if parent_id is None:
-            message = (
-                "One of `parent` or `parent_id` must be specified."
-            )
-            assert parent is not None, message
-            parent_id = parent.id
+    def __init__(
+        self,
+        parent: Optional[Union['reapy.Track', 'reapy.Take']] = None,
+        index: Optional[int] = None,
+        parent_id: Optional[str] = None
+    ) -> None:
+        message = ("One of `parent` or `parent_id` must be specified.")
+        assert parent is not None, message
+        parent_id = parent.id
         self.parent_id = parent_id
         self.index = index
         self.functions = self._get_functions()
 
-    def _get_functions(self):
+    def _get_functions(self) -> ty.Dict[str, ty.Callable[..., ty.Any]]:
         if isinstance(self.parent, reapy.Track):
             type = "TrackFX_"
         else:
@@ -39,22 +41,22 @@ class FX(ReapyObject):
         return self.functions[type]
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> ty.Dict[str, ty.Union[str, int]]:
         return {"parent_id": self.parent_id, "index": self.index}
 
-    def close_chain(self):
+    def close_chain(self) -> None:
         """Close FX chain."""
         self.functions["Show"](self.parent.id, self.index, 0)
 
-    def close_floating_window(self):
+    def close_floating_window(self) -> None:
         """Close FX floating window."""
         self.functions["Show"](self.parent.id, self.index, 2)
 
-    def close_ui(self):
+    def close_ui(self) -> None:
         """Close user interface."""
         self.is_ui_open = False
 
-    def copy_to_take(self, take, index=0):
+    def copy_to_take(self, take: 'reapy.Take', index: int = 0) -> None:
         """
         Copy FX to take.
 
@@ -73,7 +75,7 @@ class FX(ReapyObject):
             self.parent_id, self.index, take.id, index, False
         )
 
-    def copy_to_track(self, track, index=0):
+    def copy_to_track(self, track: 'reapy.Track', index: int = 0) -> None:
         """
         Copy FX to track.
 
@@ -92,20 +94,20 @@ class FX(ReapyObject):
             self.parent_id, self.index, track.id, index, False
         )
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete FX."""
         self.functions["Delete"](self.parent_id, self.index)
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable FX."""
         self.is_enabled = False
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable FX."""
         self.is_enabled = True
 
     @property
-    def is_enabled(self):
+    def is_enabled(self) -> bool:
         """
         Whether FX is enabled.
 
@@ -117,11 +119,11 @@ class FX(ReapyObject):
         return is_enabled
 
     @is_enabled.setter
-    def is_enabled(self, enabled):
+    def is_enabled(self, enabled: bool) -> None:
         self.functions["SetEnabled"](self.parent_id, self.index, enabled)
 
     @property
-    def is_online(self):
+    def is_online(self) -> bool:
         """
         Whether FX is online.
 
@@ -133,12 +135,12 @@ class FX(ReapyObject):
         return is_online
 
     @is_online.setter
-    def is_online(self, online):
+    def is_online(self, online: bool) -> None:
         offline = not online
         self.functions["SetOffline"](self.parent_id, self.index, offline)
 
     @property
-    def is_ui_open(self):
+    def is_ui_open(self) -> bool:
         """
         Whether FX user interface is open.
 
@@ -150,18 +152,18 @@ class FX(ReapyObject):
         return is_ui_open
 
     @is_ui_open.setter
-    def is_ui_open(self, open):
+    def is_ui_open(self, open: bool) -> None:
         self.functions["SetOpen"](self.parent_id, self.index, open)
 
-    def make_offline(self):
+    def make_offline(self) -> None:
         """Make FX offline."""
         self.is_online = False
 
-    def make_online(self):
+    def make_online(self) -> None:
         """Make FX online."""
         self.is_online = True
 
-    def move_to_take(self, take, index=0):
+    def move_to_take(self, take: 'reapy.Take', index: int = 0) -> None:
         """
         Move FX to take.
 
@@ -180,7 +182,7 @@ class FX(ReapyObject):
             self.parent_id, self.index, take.id, index, True
         )
 
-    def move_to_track(self, track, index=0):
+    def move_to_track(self, track: 'reapy.Track', index: int = 0) -> None:
         """
         Move FX to track.
 
@@ -200,29 +202,25 @@ class FX(ReapyObject):
         )
 
     @property
-    def n_inputs(self):
+    def n_inputs(self) -> int:
         """
         Number of inputs of FX.
 
         :type: int
         """
-        return self.functions["GetIOSize"](
-            self.parent.id, self.index, 0, 0
-        )[3]
+        return self.functions["GetIOSize"](self.parent.id, self.index, 0, 0)[3]
 
     @property
-    def n_outputs(self):
+    def n_outputs(self) -> int:
         """
         Number of outputs of FX.
 
         :type: int
         """
-        return self.functions["GetIOSize"](
-            self.parent.id, self.index, 0, 0
-        )[4]
+        return self.functions["GetIOSize"](self.parent.id, self.index, 0, 0)[4]
 
     @property
-    def n_params(self):
+    def n_params(self) -> int:
         """
         Number of parameters.
 
@@ -232,7 +230,7 @@ class FX(ReapyObject):
         return n_params
 
     @property
-    def n_presets(self):
+    def n_presets(self) -> int:
         """
         Number of presets.
 
@@ -244,7 +242,7 @@ class FX(ReapyObject):
         return n_presets
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         FX name.
 
@@ -255,30 +253,30 @@ class FX(ReapyObject):
         )[3]
         return name
 
-    def open_chain(self):
+    def open_chain(self) -> None:
         """Open FX chain with focus on FX."""
         self.functions["Show"](self.parent.id, self.index, 1)
 
-    def open_floating_window(self):
+    def open_floating_window(self) -> None:
         """Open FX floating window."""
         self.functions["Show"](self.parent.id, self.index, 3)
 
-    def open_ui(self):
+    def open_ui(self) -> None:
         """Open FX user interface."""
         self.is_ui_open = True
 
     @property
-    def params(self):
+    def params(self) -> 'reapy.FXParamsList':
         """
         List of parameters.
 
         :type: FXParamsList
         """
-        params = reapy.FXParamsList(self)
+        params = reapy.FXParamsList(cast('reapy.FX', self))
         return params
 
     @property
-    def parent(self):
+    def parent(self) -> Union['reapy.Track', 'reapy.Take']:
         """
         FX parent.
 
@@ -289,7 +287,7 @@ class FX(ReapyObject):
         return reapy.Take(self.parent_id)
 
     @property
-    def preset(self):
+    def preset(self) -> Union[str, int]:
         """
         FX preset name.
 
@@ -305,7 +303,7 @@ class FX(ReapyObject):
         return preset
 
     @preset.setter
-    def preset(self, preset):
+    def preset(self, preset: Union[str, int]) -> None:
         """
         Set FX preset.
 
@@ -317,16 +315,14 @@ class FX(ReapyObject):
             default preset.
         """
         if isinstance(preset, str):
-            self.functions["SetPreset"](
-                self.parent_id, self.index, preset
-            )
+            self.functions["SetPreset"](self.parent_id, self.index, preset)
         elif isinstance(preset, int):
             self.functions["SetPresetByIndex"](
                 self.parent_id, self.index, preset
             )
 
     @property
-    def preset_index(self):
+    def preset_index(self) -> int:
         """
         FX preset index.
 
@@ -338,7 +334,7 @@ class FX(ReapyObject):
         return index
 
     @property
-    def preset_file(self):
+    def preset_file(self) -> str:
         """
         Path to FX preset file.
 
@@ -349,16 +345,16 @@ class FX(ReapyObject):
         )[2]
         return file
 
-    def use_previous_preset(self):
+    def use_previous_preset(self) -> None:
         """Use previous preset in the presets list."""
         self.functions["NavigatePresets"](self.parent_id, self.index, -1)
 
-    def use_next_preset(self):
+    def use_next_preset(self) -> None:
         """Use next preset in the presets list."""
         self.functions["NavigatePresets"](self.parent_id, self.index, 1)
 
     @property
-    def window(self):
+    def window(self) -> Optional['reapy.Window']:
         """
         Floating window associated to FX, if it exists.
 
@@ -373,7 +369,6 @@ class FX(ReapyObject):
 
 
 class FXList(ReapyObjectList):
-
     """
     Container class for a list of FXs.
 
@@ -392,14 +387,22 @@ class FXList(ReapyObjectList):
 
     _class_name = "FXList"
 
-    def __init__(self, parent):
+    def __init__(self, parent: Union['reapy.Track', 'reapy.Take']) -> None:
         self.parent = parent
 
     @reapy.inside_reaper()
-    def __delitem__(self, key):
+    def __delitem__(self, key: Union[slice, int, str]) -> None:
         fxs = self[key] if isinstance(key, slice) else [self[key]]
         for fx in fxs:
             fx.delete()
+
+    @overload
+    def __getitem__(self, i: Union[int, str]) -> 'FX':
+        ...
+
+    @overload
+    def __getitem__(self, i: slice) -> List['FX']:
+        ...
 
     def __getitem__(self, i):
         if isinstance(i, slice):
@@ -414,15 +417,15 @@ class FXList(ReapyObjectList):
         fx = FX(self.parent, i)
         return fx
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.parent.n_fxs
 
     @reapy.inside_reaper()
-    def _get_items_from_slice(self, slice):
+    def _get_items_from_slice(self, slice: slice) -> List['FX']:
         indices = range(*slice.indices(len(self)))
         return [self[i] for i in indices]
 
-    def _get_fx_index(self, name):
+    def _get_fx_index(self, name: str) -> int:
         name = name[name.find(': ') + 2:]  # Remove FX type prefix
         if isinstance(self.parent, reapy.Track):
             prefix = "TrackFX_"
@@ -436,5 +439,5 @@ class FXList(ReapyObjectList):
         return index
 
     @property
-    def _args(self):
+    def _args(self) -> Tuple[Union['reapy.Track', 'reapy.Take']]:
         return self.parent,

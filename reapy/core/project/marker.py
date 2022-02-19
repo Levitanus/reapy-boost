@@ -1,7 +1,7 @@
+from typing import Dict, Optional, TypedDict, Union, cast
 import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
-from typing_extensions import TypedDict
 
 
 class MarkerInfo(TypedDict):
@@ -18,12 +18,15 @@ class Marker(ReapyObject):
     _class_name = "Marker"
 
     def __init__(
-        self, parent_project=None, index=None,
-        parent_project_id=None, enum_index=None
+        self,
+        parent_project: Optional['reapy.Project'] = None,
+        index: Optional[int] = None,
+        parent_project_id: Optional[str] = None,
+        enum_index: Optional[int] = None
     ):
         if parent_project_id is None:
             message = (
-                "One of `parent_project` or `parent_project_id` must be "
+                "One of `parent_project` or `parent_project_id` must be " +
                 "specified."
             )
             assert parent_project is not None, message
@@ -38,7 +41,7 @@ class Marker(ReapyObject):
             enum_index = self._get_enum_index()
         self.enum_index = enum_index
 
-    def _get_enum_index(self):
+    def _get_enum_index(self) -> int:
         """
         Return marker index as needed by RPR.EnumProjectMarkers2.
 
@@ -54,47 +57,54 @@ class Marker(ReapyObject):
         raise reapy.errors.UndefinedMarkerError(self.index)
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> Dict[str, object]:
         return {
             "index": self.index,
             "parent_project_id": self.project_id,
             'enum_index': self.enum_index
         }
 
-    def delete(self):
+    def delete(self) -> None:
         """
         Delete marker.
         """
-        RPR.DeleteProjectMarker(self.project_id, self.index, False)
+        RPR.DeleteProjectMarker(  # type:ignore
+            self.project_id, self.index, False)
 
-    @reapy.inside_reaper()
     @property
-    def infos(self):
+    def infos(self) -> MarkerInfo:
         """Get all Region infos in one call.
 
         Returns
         -------
-        RegionInfo
+        MarkerInfo
             index: int
             enum_index: int
             project_id: str
             position: float
             name: str
         """
+        return self._infos_inside()
+
+    @reapy.inside_reaper()
+    def _infos_inside(self) -> 'MarkerInfo':
         enum_index = self._get_enum_index()
         args = self.project_id, enum_index, 0, 0, 0, 0, 0
-        _, _, _, _, position, _, _, index = RPR.EnumProjectMarkers2(*args)
+        (_, _, _, _, position, _, _,
+         index) = RPR.EnumProjectMarkers2(  # type:ignore
+             *args
+         )
         out: MarkerInfo = {
-            'index': index,
+            'index': cast(int, index),
             'enum_index': enum_index,
             'project_id': self.project_id,
-            'position': position,
+            'position': cast(float, position),
             'name': self.name,
         }
         return out
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Marker name.
 
@@ -102,15 +112,15 @@ class Marker(ReapyObject):
         """
         with reapy.inside_reaper():
             # index = self._get_enum_index()
-            fs = RPR.SNM_CreateFastString('0' * 1024)
+            fs = RPR.SNM_CreateFastString('0' * 1024)  # type:ignore
             args = self.project_id, self.index, False, fs
-            RPR.SNM_GetProjectMarkerName(*args)
-            result = RPR.SNM_GetFastString(fs)
-            RPR.SNM_DeleteFastString(fs)
+            RPR.SNM_GetProjectMarkerName(*args)  # type:ignore
+            result = RPR.SNM_GetFastString(fs)  # type:ignore
+            RPR.SNM_DeleteFastString(fs)  # type:ignore
         return result
 
     @name.setter
-    def name(self, name):
+    def name(self, name: str) -> None:
         """
         Set marker name.
 
@@ -119,11 +129,10 @@ class Marker(ReapyObject):
         name : str
         """
         args = self.project_id, self.index, False, self.position, 0, name
-        RPR.SetProjectMarker2(*args)
+        RPR.SetProjectMarker2(*args)  # type:ignore
 
-    @reapy.inside_reaper()
     @property
-    def position(self):
+    def position(self) -> float:
         """
         Return marker position.
 
@@ -132,12 +141,17 @@ class Marker(ReapyObject):
         position : float
             Marker position in seconds.
         """
+        return self._position_inside()
+
+    @reapy.inside_reaper()
+    def _position_inside(self) -> float:
         index = self._get_enum_index()
         print(f'enum index in position: {index}')
-        return RPR.EnumProjectMarkers2(self.project_id, index, 0, 0, 0, 0, 0)[4]
+        return RPR.EnumProjectMarkers2(  # type:ignore
+            self.project_id, index, 0, 0, 0, 0, 0)[4]
 
     @position.setter
-    def position(self, position):
+    def position(self, position: float) -> None:
         """
         Set marker position.
 
@@ -146,6 +160,5 @@ class Marker(ReapyObject):
         position : float
             Marker position in seconds.
         """
-        RPR.SetProjectMarker2(
-            self.project_id, self.index, False, position, 0, self.name
-        )
+        RPR.SetProjectMarker2(  # type:ignore
+            self.project_id, self.index, False, position, 0, self.name)

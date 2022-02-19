@@ -5,28 +5,35 @@ import reapy
 import os
 import sys
 import tempfile
+import typing as ty
 
 
 class Deferrer:
-
     """Class to register and run deferred calls."""
 
-    _next_call_id = 0
-    _callbacks = {}
-    _args = {}
-    _kwargs = {}
+    _next_call_id: int = 0
+    _callbacks: ty.Dict[int, ty.Callable[..., ty.Any]] = {}
+    _args: ty.Dict[int, ty.Tuple[ty.Any, ...]] = {}
+    _kwargs: ty.Dict[int, ty.Dict[str, ty.Any]] = {}
 
-    def _get_new_call_id(self):
+    def _get_new_call_id(self) -> int:
         new_id = self._next_call_id
         Deferrer._next_call_id += 1
         return new_id
 
-    def _wrapped_open(self, *args, **kwargs):
+    def _wrapped_open(self, *args: ty.Any,
+                      **kwargs: ty.Any) -> ty.Union['ReaperConsole', ty.Any]:
         if args[0] == os.path.join(tempfile.gettempdir(), "reascripterr.txt"):
             return ReaperConsole()
         return open(*args, **kwargs)
 
-    def defer(self, callback, args, kwargs, at_exit=False):
+    def defer(
+        self,
+        callback: ty.Callable[..., ty.Any],
+        args: ty.Tuple[ty.Any, ...],
+        kwargs: ty.Dict[str, ty.Any],
+        at_exit: bool = False
+    ) -> None:
         call_id = self._get_new_call_id()
         Deferrer._callbacks[call_id] = callback
         Deferrer._args[call_id] = args
@@ -40,7 +47,7 @@ class Deferrer:
         else:
             sys.modules["__main__"].RPR_defer(code)
 
-    def run(self, call_id):
+    def run(self, call_id: int) -> None:
         # Get callback and run it
         callback = self._callbacks[call_id]
         args = self._args[call_id]
@@ -53,20 +60,21 @@ class Deferrer:
 
 
 class ReaperConsole:
-
     """File-like wrapper around the Reaper Console."""
 
-    def close(self):
-        pass
+    def close(self) -> None:
+        ...
 
-    def flush(self):
-        pass
+    def flush(self) -> None:
+        ...
 
-    def write(self, *args, **kwargs):
+    def write(self, *args: ty.Any, **kwargs: ty.Any) -> None:
         reapy.print(*args, **kwargs)
 
 
-def at_exit(f, *args, **kwargs):
+def at_exit(
+    f: ty.Callable[..., ty.Any], *args: ty.Any, **kwargs: ty.Any
+) -> None:
     """
     Make REAPER call a function after script execution.
 
@@ -110,7 +118,9 @@ def at_exit(f, *args, **kwargs):
     Deferrer().defer(f, args, kwargs, at_exit=True)
 
 
-def defer(f, *args, **kwargs):
+def defer(
+    f: ty.Callable[..., ty.Any], *args: ty.Any, **kwargs: ty.Any
+) -> None:
     """
     Make REAPER call a function later.
 

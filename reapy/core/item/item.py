@@ -1,3 +1,4 @@
+from typing import List, Tuple, Union, cast
 import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
@@ -7,18 +8,18 @@ class Item(ReapyObject):
 
     _class_name = "Item"
 
-    def __init__(self, id):
+    def __init__(self, id: str):
         self.id = id
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, Item) and self.id == other.id
 
     @property
-    def _args(self):
+    def _args(self) -> Tuple[str]:
         return self.id,
 
     @property
-    def active_take(self):
+    def active_take(self) -> 'reapy.Take':
         """
         Return the active take of the item.
 
@@ -27,10 +28,10 @@ class Item(ReapyObject):
         take : Take
             Active take of the item.
         """
-        take = reapy.Take(RPR.GetActiveTake(self.id))
+        take = reapy.Take(RPR.GetActiveTake(self.id))  # type:ignore
         return take
 
-    def add_take(self):
+    def add_take(self) -> 'reapy.Take':
         """
         Create and return a new take in item.
 
@@ -39,20 +40,20 @@ class Item(ReapyObject):
         take : Take
             New take in item.
         """
-        take_id = RPR.AddTakeToMediaItem(self.id)
+        take_id = RPR.AddTakeToMediaItem(self.id)  # type:ignore
         take = reapy.Take(take_id)
         return take
 
     @reapy.inside_reaper()
-    def delete(self):
+    def delete(self) -> None:
         """Delete item."""
-        RPR.DeleteTrackMediaItem(self.track.id, self.id)
+        RPR.DeleteTrackMediaItem(self.track.id, self.id)  # type:ignore
 
-    def get_info_value(self, param_name):
-        value = RPR.GetMediaItemInfo_Value(self.id, param_name)
+    def get_info_value(self, param_name: str) -> float:
+        value = RPR.GetMediaItemInfo_Value(self.id, param_name)  # type:ignore
         return value
 
-    def get_take(self, index):
+    def get_take(self, index: int) -> 'reapy.Take':
         """
         Return index-th take of item.
 
@@ -66,13 +67,12 @@ class Item(ReapyObject):
         take : Take
             index-th take of media item.
         """
-        take_id = RPR.GetItemTake(self.id, index)
+        take_id = RPR.GetItemTake(self.id, index)  # type:ignore
         take = reapy.Take(take_id)
         return take
 
-    @reapy.inside_reaper()
     @property
-    def has_valid_id(self):
+    def has_valid_id(self) -> bool:
         """
         Whether ReaScript ID is still valid.
 
@@ -81,15 +81,23 @@ class Item(ReapyObject):
 
         :type: bool
         """
+        return self._has_valid_id_inside()
+
+    @reapy.inside_reaper()
+    def _has_valid_id_inside(self) -> bool:
         try:
             project_id = self.project.id
         except OSError:
             return False
         pointer, name = self._get_pointer_and_name()
-        return bool(RPR.ValidatePtr2(project_id, pointer, name))
+        return bool(
+            RPR.ValidatePtr2(  # type:ignore
+                project_id, pointer, name
+            )
+        )
 
     @property
-    def is_selected(self):
+    def is_selected(self) -> bool:
         """
         Return whether item is selected.
 
@@ -98,15 +106,15 @@ class Item(ReapyObject):
         is_selected : bool
             Whether item is selected.
         """
-        is_selected = bool(RPR.IsMediaItemSelected(self.id))
+        is_selected = bool(RPR.IsMediaItemSelected(self.id))  # type:ignore
         return is_selected
 
     @is_selected.setter
-    def is_selected(self, value):
+    def is_selected(self, value: bool) -> None:
         self.set_info_value("B_UISEL", int(value))
 
     @property
-    def length(self):
+    def length(self) -> float:
         """
         Return item length in seconds.
 
@@ -120,7 +128,7 @@ class Item(ReapyObject):
         return length
 
     @length.setter
-    def length(self, length):
+    def length(self, length: float) -> None:
         """
         Set item length.
 
@@ -129,10 +137,10 @@ class Item(ReapyObject):
         length : float
             New item length in seconds.
         """
-        RPR.SetMediaItemLength(self.id, length, True)
+        RPR.SetMediaItemLength(self.id, length, True)  # type:ignore
 
     @reapy.inside_reaper()
-    def make_only_selected_item(self):
+    def make_only_selected_item(self) -> None:
         """
         Make track the only selected item in parent project.
         """
@@ -140,7 +148,7 @@ class Item(ReapyObject):
         self.is_selected = True
 
     @property
-    def n_takes(self):
+    def n_takes(self) -> int:
         """
         Return the number of takes of media item.
 
@@ -149,11 +157,11 @@ class Item(ReapyObject):
         n_takes : int
             Number of takes of media item.
         """
-        n_takes = RPR.GetMediaItemNumTakes(self.id)
+        n_takes = cast(int, RPR.GetMediaItemNumTakes(self.id))  # type:ignore
         return n_takes
 
     @property
-    def position(self):
+    def position(self) -> float:
         """
         Return item position in seconds.
 
@@ -166,7 +174,7 @@ class Item(ReapyObject):
         return position
 
     @position.setter
-    def position(self, position):
+    def position(self, position: float) -> None:
         """
         Set media item position to `position`.
 
@@ -175,29 +183,38 @@ class Item(ReapyObject):
         position : float
             New item position in seconds.
         """
-        RPR.SetMediaItemPosition(self.id, position, False)
+        RPR.SetMediaItemPosition(self.id, position, False)  # type:ignore
 
     @property
-    def project(self):
+    def project(self) -> 'reapy.Project':
         """
         Item parent project.
 
         :type: reapy.Project
         """
-        return reapy.Project(RPR.GetItemProjectContext(self.id))
+        return reapy.Project(
+            cast(
+                str,
+                RPR.GetItemProjectContext(  # type:ignore
+                    self.id
+                )
+            )
+        )
 
-    def set_info_value(self, param_name, value):
+    def set_info_value(
+        self, param_name: str, value: Union[bool, int, float]
+    ) -> None:
         """
         Set raw item info value.
-        
+
         Parameters
         ----------
         param_name : str
         value : float
         """
-        RPR.SetMediaItemInfo_Value(self.id, param_name, value)
+        RPR.SetMediaItemInfo_Value(self.id, param_name, value)  # type:ignore
 
-    def split(self, position):
+    def split(self, position: float) -> Tuple['Item', 'Item']:
         """
         Split item and return left and right parts.
 
@@ -211,13 +228,12 @@ class Item(ReapyObject):
         left, right : Item
             Left and right parts of the split.
         """
-        right_id = RPR.SplitMediaItem(self.id, position)
+        right_id = RPR.SplitMediaItem(self.id, position)  # type:ignore
         left, right = self, Item(right_id)
         return left, right
 
-    @reapy.inside_reaper()
     @property
-    def takes(self):
+    def takes(self) -> List['reapy.Take']:
         """
         Return list of all takes of media item.
 
@@ -226,14 +242,21 @@ class Item(ReapyObject):
         takes : list of Take
             List of all takes of media item.
         """
-        n_takes = RPR.GetMediaItemNumTakes(self.id)
-        take_ids = [RPR.GetMediaItemTake(self.id, i) for i in range(n_takes)]
+        return self._takes_inside()
+
+    @reapy.inside_reaper()
+    def _takes_inside(self) -> List['reapy.Take']:
+        n_takes = RPR.GetMediaItemNumTakes(self.id)  # type:ignore
+        take_ids = [
+            RPR.GetMediaItemTake(  # type:ignore
+                self.id, i
+            ) for i in range(n_takes)
+        ]
         takes = [reapy.Take(take_id) for take_id in take_ids]
         return takes
 
-    @reapy.inside_reaper()
     @property
-    def track(self):
+    def track(self) -> 'reapy.Track':
         """
         Parent track of item.
 
@@ -250,16 +273,20 @@ class Item(ReapyObject):
         >>> item.track = track1  # Move to track 1
         >>> item.track = 0  # Move to track 0
         """
-        track_id = RPR.GetMediaItemTrack(self.id)
+        return self._track_inside()
+
+    @reapy.inside_reaper()
+    def _track_inside(self) -> 'reapy.Track':
+        track_id = RPR.GetMediaItemTrack(self.id)  # type:ignore
         track = reapy.Track(track_id)
         return track
 
     @track.setter
-    def track(self, track):
+    def track(self, track: 'reapy.Track') -> None:
         if isinstance(track, int):
             track = reapy.Track(track, project=self.project)
-        RPR.MoveMediaItemToTrack(self.id, track.id)
+        RPR.MoveMediaItemToTrack(self.id, track.id)  # type:ignore
 
-    def update(self):
+    def update(self) -> None:
         """Update item in REAPER interface."""
-        RPR.UpdateItemInProject(self.id)
+        RPR.UpdateItemInProject(self.id)  # type:ignore

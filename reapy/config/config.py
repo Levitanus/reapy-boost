@@ -7,6 +7,7 @@ import random
 import re
 import shutil
 import string
+import typing as ty
 import warnings
 
 import reapy
@@ -33,23 +34,27 @@ REAPY_SERVER_PORT = 2306
 WEB_INTERFACE_PORT = 2307
 
 
-class CaseInsensitiveDict(OrderedDict):
+T2 = ty.TypeVar('T2')
+T1 = ty.TypeVar('T1')
 
+
+class CaseInsensitiveDict(OrderedDict[str, T1]):
     """OrderedDict with case-insensitive keys."""
+    _dict: OrderedDict[str, T1]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: T1, **kwargs: T1) -> None:
         super().__init__(*args, **kwargs)
         self._dict = OrderedDict(*args, **kwargs)
         for key, value in self._dict.items():
             self._dict[key.lower()] = value
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> ty.Union[str, bool]:
         return key.lower() in self._dict
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> T1:
         return self._dict[key.lower()]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: T1) -> None:
         super().__setitem__(key, value)
         self._dict[key.lower()] = value
 
@@ -58,7 +63,7 @@ class Config(ConfigParser):
 
     """Parser for REAPER .ini file."""
 
-    def __init__(self, ini_file):
+    def __init__(self, ini_file: str) -> None:
         super().__init__(
             strict=False, delimiters="=", dict_type=CaseInsensitiveDict
         )
@@ -80,7 +85,7 @@ class Config(ConfigParser):
             super().write(f, False)
 
 
-def add_reascript(resource_path, script_path):
+def add_reascript(resource_path: str, script_path: str) -> str:
     """Add ReaScript to *Actions* list in REAPER.
 
     Works by manually editing ``reaper-kb.ini`` configuration file.
@@ -133,7 +138,9 @@ def add_reascript(resource_path, script_path):
     return '"_{}"'.format(code)
 
 
-def add_web_interface(resource_path, port=WEB_INTERFACE_PORT):
+def add_web_interface(
+    resource_path: str, port: int = WEB_INTERFACE_PORT
+) -> None:
     """Add a REAPER Web Interface at a specified port.
 
     It is added by manually editing reaper.ini configuration file,
@@ -162,7 +169,10 @@ def add_web_interface(resource_path, port=WEB_INTERFACE_PORT):
     config.write()
 
 
-def configure_reaper(resource_path=None, detect_portable_install=True):
+def configure_reaper(
+    resource_path: ty.Optional[str] = None,
+    detect_portable_install: bool = True
+) -> None:
     """Configure REAPER to allow reapy connections.
 
     Allows to use reapy from outside REAPER.
@@ -214,7 +224,7 @@ def configure_reaper(resource_path=None, detect_portable_install=True):
     set_ext_state("reapy", "activate_reapy_server", action, resource_path)
 
 
-def create_new_web_interface(port):
+def create_new_web_interface(port: int) -> None:
     """Create a Web interface in REAPER at a specified port.
 
     .. deprecated:: 0.8.0
@@ -244,7 +254,9 @@ def create_new_web_interface(port):
     config.write()
 
 
-def delete_web_interface(resource_path, port=WEB_INTERFACE_PORT):
+def delete_web_interface(
+    resource_path: str, port: int = WEB_INTERFACE_PORT
+) -> None:
     """Delete a REAPER Web Interface at a specified port.
 
     It is deleted by manually editing reaper.ini configuration file,
@@ -281,7 +293,7 @@ def delete_web_interface(resource_path, port=WEB_INTERFACE_PORT):
         config.write()
 
 
-def disable_dist_api():
+def disable_dist_api() -> None:
     """
     Disable distant API.
 
@@ -300,7 +312,7 @@ def disable_dist_api():
     reapy.show_message_box(message)
 
 
-def enable_dist_api():
+def enable_dist_api() -> None:
     """Enable distant API.
 
     .. deprecated:: 0.8.0
@@ -312,7 +324,7 @@ def enable_dist_api():
     ``reapy.reascripts.activate_reapy_server`` to the Actions list.
     """
     msg = (
-        "Function enable_dist_api is deprecated since 0.8.0. "
+        "Function enable_dist_api is deprecated since 0.8.0. " +
         "Use reapy.config.configure_reaper instead."
     )
     warnings.warn(FutureWarning(msg))
@@ -325,13 +337,13 @@ def enable_dist_api():
     section, key, value = "reapy", "activate_reapy_server", command_name
     reapy.set_ext_state(section, key, value, persist=True)
     message = (
-        "reapy successfully enabled!\n\nPlease restart REAPER.\n\nYou will "
+        "reapy successfully enabled!\n\nPlease restart REAPER.\n\nYou will " +
         "then be able to import reapy from the outside."
     )
     reapy.show_message_box(message)
 
 
-def enable_python(resource_path):
+def enable_python(resource_path: str) -> None:
     shared_library = get_python_shared_library()
     config = Config(os.path.join(resource_path, "reaper.ini"))
     config["reaper"]["reascript"] = "1"
@@ -340,7 +352,7 @@ def enable_python(resource_path):
     config.write()
 
 
-def get_activate_reapy_server_path():
+def get_activate_reapy_server_path() -> str:
     """Return path to the ``activate_reapy_server`` ReaScript."""
     script_path = os.path.abspath(activate_reapy_server.__file__)
     if script_path.endswith(('.pyc', '.pyw')):
@@ -348,7 +360,7 @@ def get_activate_reapy_server_path():
     return script_path
 
 
-def get_new_reascript_code(ini_file):
+def get_new_reascript_code(ini_file: str) -> str:
     """Return new ReaScript code for reaper-kb.ini.
 
     Parameters
@@ -372,7 +384,9 @@ def get_new_reascript_code(ini_file):
     return "RS" + code
 
 
-def set_ext_state(section, key, value, resource_path):
+def set_ext_state(
+    section: str, key: str, value: str, resource_path: str
+) -> str:
     """Update REAPER external state.
 
     Works by manually editing ``reaper-extstate.ini`` configuration file.
@@ -403,7 +417,9 @@ def set_ext_state(section, key, value, resource_path):
     config.write()
 
 
-def web_interface_exists(resource_path, port=WEB_INTERFACE_PORT):
+def web_interface_exists(
+    resource_path: str, port: int = WEB_INTERFACE_PORT
+) -> bool:
     """Return whether a REAPER Web Interface exists at a given port.
 
     Parameters

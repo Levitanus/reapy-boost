@@ -1,12 +1,13 @@
 """Get setup infos."""
 
+from typing import Tuple
 from reapy.reascripts import enable_dist_api, disable_dist_api
 
 import os
 import sys
 
 
-def get_config_scripts():
+def get_config_scripts() -> Tuple[str, str]:
     """
     Return paths to configuration ReaScripts.
     """
@@ -16,7 +17,7 @@ def get_config_scripts():
     )
 
 
-def get_python_dll():
+def get_python_dll() -> str:
     """
     Return path to Python DLL (if it can be found).
     """

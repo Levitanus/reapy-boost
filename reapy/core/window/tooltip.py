@@ -1,12 +1,22 @@
+from typing import NoReturn
 import reapy.reascript_api as RPR
 from .window import Window
 
 
 class ToolTip(Window):
-
     """Tooltip window."""
+    id: bytes
+    _x: int
+    _y: int
+    _topmost: bool
+    _show: bool
 
-    def __init__(self, message=" ", x=0, y=0, topmost=True, show=True):
+    def __init__(self,
+                 message: str = " ",
+                 x: int = 0,
+                 y: int = 0,
+                 topmost: bool = True,
+                 show: bool = True) -> None:
         """Initialize tooltip.
 
         Parameters
@@ -30,15 +40,16 @@ class ToolTip(Window):
         self._topmost = topmost
         if show:
             self.show()
-        self.id = RPR.GetTooltipWindow
+        self.id = RPR.GetTooltipWindow  # type:ignore
 
-    def hide(self):
+    def hide(self) -> None:
         """Hide tooltip."""
-        RPR.TrackCtl_SetToolTip("", self.x, self.y, self.topmost)
+        RPR.TrackCtl_SetToolTip(  # type:ignore
+            "", self.x, self.y, self.topmost)
         self._is_shown = False
 
     @property
-    def message(self):
+    def message(self) -> str:
         """
         Tooltip message.
 
@@ -49,21 +60,22 @@ class ToolTip(Window):
         return self._message
 
     @message.setter
-    def message(self, message):
+    def message(self, message: str) -> None:
         self._message = message
         if self._is_shown:
             self.show()
 
-    def refresh(self):
+    def refresh(self) -> NoReturn:
         raise NotImplementedError
 
-    def show(self):
+    def show(self) -> None:
         """Show tooltip."""
-        RPR.TrackCtl_SetToolTip(self.message, self.x, self.y, self.topmost)
+        RPR.TrackCtl_SetToolTip(  # type:ignore
+            self.message, self.x, self.y, self.topmost)
         self._is_shown = True
 
     @property
-    def topmost(self):
+    def topmost(self) -> bool:
         """
         Whether tooltip is displayed on top of all other windows.
 
@@ -72,13 +84,13 @@ class ToolTip(Window):
         return self._topmost
 
     @topmost.setter
-    def topmost(self, topmost):
+    def topmost(self, topmost: bool) -> None:
         self._topmost = topmost
         if self._is_shown:
             self.show()
 
     @property
-    def x(self):
+    def x(self) -> int:
         """
         x position.
 
@@ -86,13 +98,13 @@ class ToolTip(Window):
         return self._x
 
     @x.setter
-    def x(self, x):
+    def x(self, x: int) -> None:
         self._x = x
         if self._is_shown:
             self.show()
 
     @property
-    def y(self):
+    def y(self) -> int:
         """y position.
 
         :type: int
@@ -100,7 +112,7 @@ class ToolTip(Window):
         return self._y
 
     @y.setter
-    def y(self, y):
+    def y(self, y: int) -> None:
         self._y = y
         if self._is_shown:
             self.show()

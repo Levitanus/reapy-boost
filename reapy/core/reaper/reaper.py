@@ -1,3 +1,5 @@
+from types import TracebackType
+from typing import Dict, List, Optional, Tuple
 import reapy
 import reapy.reascript_api as RPR
 import contextlib
@@ -8,11 +10,10 @@ import io
 import os
 import sys
 
-
 _ORIGINAL_PRINT = print
 
 
-def add_project_tab(make_current_project=True):
+def add_project_tab(make_current_project: bool = True) -> 'reapy.Project':
     """Open new project tab and return it.
 
     Parameters
@@ -35,7 +36,7 @@ def add_project_tab(make_current_project=True):
     return reapy.Project()
 
 
-def add_reascript(path, section_id=0, commit=True):
+def add_reascript(path: str, section_id: int = 0, commit: bool = True) -> int:
     """
     Add a ReaScript and return the new action ID.
 
@@ -59,16 +60,15 @@ def add_reascript(path, section_id=0, commit=True):
     if not os.path.isfile(path):
         raise FileNotFoundError(path)
     path = os.path.abspath(path)
-    action_id = RPR.AddRemoveReaScript(
-        True, section_id, path, commit
-    )
+    action_id = RPR.AddRemoveReaScript(  # type:ignore
+        True, section_id, path, commit)
     if action_id == 0:
         message = "Script at {} wasn't successfully added.".format(path)
         raise ValueError(message)
     return action_id
 
 
-def arm_command(command_id, section=""):
+def arm_command(command_id: int, section: str = "") -> None:
     """
     Arm or disarm command.
 
@@ -78,11 +78,13 @@ def arm_command(command_id, section=""):
         Command ID. If 0, disarm command.
     section : str, optional
         Command section. Empty string for main section. Default="".
+        TODO: explain what section parameter corresponds to.
     """
-    RPR.ArmCommand(command_id, section)
+    RPR.ArmCommand(command_id, section)  # type:ignore
 
 
-def browse_for_file(window_title="", extension=""):
+def browse_for_file(window_title: str = "",
+                    extension: str = "") -> Optional[str]:
     """
     Ask the user to select a file.
 
@@ -98,12 +100,13 @@ def browse_for_file(window_title="", extension=""):
     path : str or NoneType
         Path to file, or None if user cancelled.
     """
-    success, path, *_ = RPR.GetUserFileNameForRead("", window_title, extension)
+    success, path, *_ = RPR.GetUserFileNameForRead(  # type:ignore
+        "", window_title, extension)
     if success:
         return path
 
 
-def clear_console():
+def clear_console() -> None:
     """
     Clear Reaper console.
 
@@ -111,17 +114,17 @@ def clear_console():
     --------
     ReaProject.show_console_message
     """
-    RPR.ClearConsole()
+    RPR.ClearConsole()  # type:ignore
 
 
-def clear_peak_cache():
+def clear_peak_cache() -> None:
     """
     Reset global peak cache.
     """
-    RPR.ClearPeakCache()
+    RPR.ClearPeakCache()  # type:ignore
 
 
-def dB_to_slider(db):
+def dB_to_slider(db: float) -> float:
     """
     Convert decibel value to slider.
 
@@ -139,11 +142,11 @@ def dB_to_slider(db):
     --------
     slider_to_dB
     """
-    slider = RPR.DB2SLIDER(db)
+    slider = RPR.DB2SLIDER(db)  # type:ignore
     return slider
 
 
-def delete_ext_state(section, key, persist=False):
+def delete_ext_state(section: str, key: str, persist: bool = False) -> None:
     """
     Delete extended state value for a given section and key.
 
@@ -157,43 +160,43 @@ def delete_ext_state(section, key, persist=False):
         Whether extended state should remain deleted next time REAPER
         is opened.
     """
-    RPR.DeleteExtState(section, key, persist)
+    RPR.DeleteExtState(section, key, persist)  # type:ignore
 
 
-def disarm_command():
+def disarm_command() -> None:
     """
     Disarm command.
     """
     arm_command(0)
 
 
-def get_armed_command():
-    command_id, section, _ = RPR.GetArmedCommand("", 2048)
+def get_armed_command() -> Optional[Tuple[int, str]]:
+    command_id, section, _ = RPR.GetArmedCommand("", 2048)  # type:ignore
     if command_id == 0:
         return
     return command_id, section
 
 
-def get_command_id(command_name):
+def get_command_id(command_name: str) -> Optional[int]:
     """
     Return ID of command with a given name.
 
     Parameters
     ----------
     command_name : str
-        Command name.
+        Command name. Perhaps, id-string
 
     Returns
     -------
     command_id : int or None
         Command ID, or None if name can't be found.
     """
-    command_id = RPR.NamedCommandLookup(command_name)
+    command_id = RPR.NamedCommandLookup(command_name)  # type:ignore
     command_id = command_id if command_id else None
     return command_id
 
 
-def get_command_name(command_id):
+def get_command_name(command_id: int) -> str:
     """
     Return name of command with a given ID.
 
@@ -207,13 +210,13 @@ def get_command_name(command_id):
     command_name : str, None
         Command name, or None for a native command.
     """
-    command_name = RPR.ReverseNamedCommandLookup(command_id)
+    command_name = RPR.ReverseNamedCommandLookup(command_id)  # type:ignore
     if command_name is not None:
         command_name = "_" + command_name
     return command_name
 
 
-def get_exe_dir():
+def get_exe_dir() -> str:
     """
     Return REAPER.exe directory (e.g. "C:\\Program Files\\REAPER").
 
@@ -222,11 +225,11 @@ def get_exe_dir():
     path : str
         Path to REAPER.exe directory.
     """
-    path = RPR.GetExePath()
+    path = RPR.GetExePath()  # type:ignore
     return path
 
 
-def get_ext_state(section, key):
+def get_ext_state(section: str, key: str) -> str:
     """
     Get the extended state value for a specific section and key.
 
@@ -247,11 +250,11 @@ def get_ext_state(section, key):
     delete_ext_state
     set_ext_state
     """
-    value = RPR.GetExtState(section, key)
+    value = RPR.GetExtState(section, key)  # type:ignore
     return value
 
 
-def get_global_automation_mode():
+def get_global_automation_mode() -> str:
     """
     Return global automation override mode.
 
@@ -266,6 +269,7 @@ def get_global_automation_mode():
             "touch"
             "trim/read"
             "write"
+    TODO: consider introducing of Enum
     """
     modes = {
         -1: "none",
@@ -276,11 +280,11 @@ def get_global_automation_mode():
         4: "latch",
         5: "bypass"
     }
-    override_mode = modes[RPR.GetGlobalAutomationOverride()]
+    override_mode = modes[RPR.GetGlobalAutomationOverride()]  # type:ignore
     return override_mode
 
 
-def get_ini_file():
+def get_ini_file() -> str:
     """
     Return path to REAPER.ini file.
 
@@ -289,11 +293,11 @@ def get_ini_file():
     path : str
         Path to REAPER.ini file.
     """
-    path = RPR.get_ini_file()
+    path = RPR.get_ini_file()  # type:ignore
     return path
 
 
-def get_last_touched_track():
+def get_last_touched_track() -> Optional['reapy.Track']:
     """
     Return last touched track, or None if no track has been touched.
 
@@ -301,13 +305,13 @@ def get_last_touched_track():
     -------
     track : Track or None if no track has been touched.
     """
-    track = reapy.Track(RPR.GetLastTouchedTrack())
+    track = reapy.Track(RPR.GetLastTouchedTrack())  # type:ignore
     if not track._is_defined:
         track = None
     return track
 
 
-def get_main_window():
+def get_main_window() -> 'reapy.Window':
     """
     Return main window.
 
@@ -316,12 +320,12 @@ def get_main_window():
     window : Window
         Main window.
     """
-    window = reapy.Window(RPR.GetMainHwnd())
+    window = reapy.Window(RPR.GetMainHwnd())  # type:ignore
     return window
 
 
 @reapy.inside_reaper()
-def get_projects():
+def get_projects() -> List['reapy.Project']:
     """
     Return list of all opened projects.
 
@@ -338,12 +342,12 @@ def get_projects():
     return projects
 
 
-def get_reaper_version():
-    version = RPR.GetAppVersion()
+def get_reaper_version() -> str:
+    version = RPR.GetAppVersion()  # type:ignore
     return version
 
 
-def get_resource_path():
+def get_resource_path() -> str:
     """
     Return path to directory where .ini files are stored.
 
@@ -352,11 +356,13 @@ def get_resource_path():
     path : str
         Path to directory where .ini files are stored.
     """
-    path = RPR.GetResourcePath()
+    path = RPR.GetResourcePath()  # type:ignore
     return path
 
 
-def get_user_inputs(title, captions, retvals_size=1024):
+def get_user_inputs(title: str,
+                    captions: List[str],
+                    retvals_size: int = 1024) -> Dict[str, str]:
     """Show text inputs to user and get values from them.
 
     Parameters
@@ -380,16 +386,15 @@ def get_user_inputs(title, captions, retvals_size=1024):
     RuntimeError
         When user clicked the Cancel button.
     """
-    success, _, _, _, retvals_csv, _ = RPR.GetUserInputs(
-        title, len(captions), ",".join(captions), "", retvals_size
-    )
+    success, _, _, _, retvals_csv, _ = RPR.GetUserInputs(  # type:ignore
+        title, len(captions), ",".join(captions), "", retvals_size)
     if success:
         return dict(zip(captions, retvals_csv.split(",")))
     else:
         raise RuntimeError('User clicked Cancel.')
 
 
-def has_ext_state(section, key):
+def has_ext_state(section: str, key: str) -> bool:
     """
     Return whether extended state exists for given section and key.
 
@@ -404,12 +409,34 @@ def has_ext_state(section, key):
     -------
     has_ext_state : bool
     """
-    has_ext_state = bool(RPR.HasExtState(section, key))
+    has_ext_state = bool(RPR.HasExtState(section, key))  # type:ignore
     return has_ext_state
 
 
+def is_valid_id(id_: str) -> bool:
+    """If it is not nullptr.
+
+    Parameters
+    ----------
+    id_ : str
+
+    Notes
+    -----
+    Not actually does anything else than id is not 0x00000
+
+    Returns
+    -------
+    bool
+    """
+    return not id_.endswith("0x0000000000000000")
+
+
 @reapy.inside_reaper()
-def open_project(filepath, in_new_tab=False, make_current_project=True):
+def open_project(
+    filepath: str,
+    in_new_tab: bool = False,
+    make_current_project: bool = True
+) -> 'reapy.Project':
     """
     Open project and return it.
 
@@ -431,14 +458,14 @@ def open_project(filepath, in_new_tab=False, make_current_project=True):
         current_project = reapy.Project()
     if in_new_tab:
         add_project_tab(make_current_project=True)
-    RPR.Main_openProject(filepath)
+    RPR.Main_openProject(filepath)  # type:ignore
     project = reapy.Project()
     if not make_current_project:
         current_project.make_current_project()
     return project
 
 
-def perform_action(action_id):
+def perform_action(action_id: int) -> None:
     """
     Perform action with ID `action_id` in the main Actions section.
 
@@ -447,7 +474,7 @@ def perform_action(action_id):
     action_id : int
         Action ID in the main Actions section.
     """
-    RPR.Main_OnCommand(action_id, 0)
+    RPR.Main_OnCommand(action_id, 0)  # type:ignore
 
 
 class prevent_ui_refresh(contextlib.ContextDecorator):
@@ -464,14 +491,16 @@ class prevent_ui_refresh(contextlib.ContextDecorator):
 
     """
 
-    def __enter__(self):
-        RPR.PreventUIRefresh(1)
+    def __enter__(self) -> None:
+        RPR.PreventUIRefresh(1)  # type:ignore
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        RPR.PreventUIRefresh(-1)
+    def __exit__(
+        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
+    ) -> None:
+        RPR.PreventUIRefresh(-1)  # type:ignore
 
 
-def print(*args, **kwargs):
+def print(*args: object, **kwargs: object) -> None:
     """
     Alias to ReaProject.show_console_message.
     """
@@ -495,15 +524,19 @@ class reaprint(contextlib.ContextDecorator):
     """
     _original_stdouts = collections.deque()
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self._original_stdouts.append(sys.stdout)
         sys.stdout = ReaperConsole()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
+    ) -> None:
         sys.stdout = self._original_stdouts.pop()
 
 
-def remove_reascript(path, section_id=0, commit=True):
+def remove_reascript(
+    path: str, section_id: int = 0, commit: bool = True
+) -> None:
     """
     Remove a ReaScript.
 
@@ -520,15 +553,14 @@ def remove_reascript(path, section_id=0, commit=True):
         the last call.
     """
     path = os.path.abspath(path)
-    success = RPR.AddRemoveReaScript(
-        False, section_id, path, commit
-    )
+    success = RPR.AddRemoveReaScript(  # type:ignore
+        False, section_id, path, commit)
     if not success:
         message = "Script at {} wasn't successfully added.".format(path)
         raise ValueError(message)
 
 
-def rgb_from_native(native_color):
+def rgb_from_native(native_color: int) -> Tuple[int, int, int]:
     """
     Extract RGB values from a native (OS-dependent) color.
 
@@ -542,11 +574,11 @@ def rgb_from_native(native_color):
     r, g, b : (int, int, int)
         RGB values between 0 and 255.
     """
-    _, r, g, b = RPR.ColorFromNative(native_color, 0, 0, 0)
+    _, r, g, b = RPR.ColorFromNative(native_color, 0, 0, 0)  # type:ignore
     return r, g, b
 
 
-def rgb_to_native(rgb):
+def rgb_to_native(rgb: Tuple[int, int, int]) -> int:
     """
     Make a native (OS-dependent) color from RGB values.
 
@@ -560,11 +592,13 @@ def rgb_to_native(rgb):
     native_color : int
         Native color.
     """
-    native_color = RPR.ColorToNative(*rgb)
+    native_color = RPR.ColorToNative(*rgb)  # type:ignore
     return native_color
 
 
-def set_ext_state(section, key, value, persist=False):
+def set_ext_state(
+    section: str, key: str, value: str, persist: bool = False
+) -> None:
     """
     Set the extended state value for a specific section and key.
 
@@ -585,10 +619,10 @@ def set_ext_state(section, key, value, persist=False):
     delete_ext_state
     get_ext_state
     """
-    RPR.SetExtState(section, key, value, persist)
+    RPR.SetExtState(section, key, value, persist)  # type:ignore
 
 
-def set_global_automation_mode(mode):
+def set_global_automation_mode(mode: str) -> None:
     """
     Set global automation mode.
 
@@ -603,6 +637,7 @@ def set_global_automation_mode(mode):
             "touch"
             "trim/read"
             "write"
+    TODO: consider introducing Enum
     """
     modes = {
         "none": -1,
@@ -613,10 +648,10 @@ def set_global_automation_mode(mode):
         "latch": 4,
         "bypass": 5
     }
-    RPR.SetGlobalAutomationOverride(modes[mode])
+    RPR.SetGlobalAutomationOverride(modes[mode])  # type:ignore
 
 
-def show_console_message(*args, sep=" ", end="\n"):
+def show_console_message(*args: object, sep: str = " ", end: str = "\n"):
     """
     Print a message to the Reaper console.
 
@@ -633,10 +668,10 @@ def show_console_message(*args, sep=" ", end="\n"):
     _ORIGINAL_PRINT(*args, sep=sep, end=end, file=file)
     file.seek(0)
     txt = file.read()
-    RPR.ShowConsoleMsg(txt)
+    RPR.ShowConsoleMsg(txt)  # type:ignore
 
 
-def show_message_box(text="", title="", type="ok"):
+def show_message_box(text: str = "", title: str = "", type: str = "ok"):
     """
     Show message box.
 
@@ -686,12 +721,14 @@ def show_message_box(text="", title="", type="ok"):
         6: "yes",
         7: "no"
     }
-    status = RPR.ShowMessageBox(text, title, all_types[type])
+    status = RPR.ShowMessageBox(  # type:ignore
+        text, title, all_types[type]
+    )
     status = all_status[status]
     return status
 
 
-def slider_to_dB(slider):
+def slider_to_dB(slider: float) -> float:
     """
     Convert slider value to decibel.
 
@@ -709,13 +746,13 @@ def slider_to_dB(slider):
     --------
     dB_to_slider
     """
-    db = RPR.SLIDER2DB(slider)
+    db = RPR.SLIDER2DB(slider)  # type:ignore
     return db
 
 
-def test_api():
+def test_api() -> None:
     """Display a message window if the API can successfully be called."""
-    RPR.APITest()
+    RPR.APITest()  # type:ignore
 
 
 class undo_block(contextlib.ContextDecorator):
@@ -740,33 +777,35 @@ class undo_block(contextlib.ContextDecorator):
         16: freeze states
     """
 
-    def __init__(self, undo_name, flags=-1):
+    def __init__(self, undo_name: str, flags: int = -1) -> None:
         self.undo_name = undo_name
         self.flags = flags
 
-    def __enter__(self):
-        RPR.Undo_BeginBlock()
+    def __enter__(self) -> None:
+        RPR.Undo_BeginBlock()  # type:ignore
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        RPR.Undo_EndBlock(self.undo_name, self.flags)
+    def __exit__(
+        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
+    ) -> None:
+        RPR.Undo_EndBlock(self.undo_name, self.flags)  # type:ignore
 
 
-def update_arrange():
+def update_arrange() -> None:
     """
     Redraw the arrange view.
     """
-    RPR.UpdateArrange()
+    RPR.UpdateArrange()  # type:ignore
 
 
-def update_timeline():
+def update_timeline() -> None:
     """
     Redraw the arrange view and ruler.
     """
-    RPR.UpdateTimeline()
+    RPR.UpdateTimeline()  # type:ignore
 
 
-def view_prefs():
+def view_prefs() -> None:
     """
     Open Preferences.
     """
-    RPR.ViewPrefs(0, "")
+    RPR.ViewPrefs(0, "")  # type:ignore

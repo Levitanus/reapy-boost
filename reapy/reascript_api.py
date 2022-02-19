@@ -1,3 +1,4 @@
+from typing import List
 import reapy
 from reapy.tools import json
 
@@ -6,7 +7,7 @@ import sys
 
 
 @reapy.inside_reaper()
-def _get_api_names():
+def _get_api_names() -> List[str]:
     return __all__
 
 

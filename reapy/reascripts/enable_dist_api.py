@@ -23,3 +23,4 @@ if __name__ == "__main__":
     api_filename = "_JS_API_generated.py"
     bin_dir = os.path.join(reapy.get_resource_path(), "UserPlugins")
     _JS_generator.generate_js_api(bin_dir, api_filename)
+    reapy.generate_imgui()

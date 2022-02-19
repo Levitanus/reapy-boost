@@ -1,10 +1,9 @@
 import contextlib
 import functools
-import importlib
+import typing as ty
 
 import reapy
 import reapy.config
-from reapy.errors import DisabledDistAPIError, DisabledDistAPIWarning
 from .network import machines
 # if not reapy.is_inside_reaper():
 #     try:
@@ -16,14 +15,18 @@ from .network import machines
 #         warnings.warn(DisabledDistAPIWarning())
 #         _CLIENT = None
 
+# from typing import Callable, Concatenate, TypeVar
 
-def dist_api_is_enabled():
+FuncType = ty.Callable[..., ty.Any]
+F = ty.TypeVar('F', bound=ty.Union[FuncType, property])
+
+
+def dist_api_is_enabled() -> bool:
     """Return whether reapy can reach REAPER from the outside."""
     return machines.get_selected_client() is not None
 
 
 class inside_reaper(contextlib.ContextDecorator):
-
     """
     Context manager for efficient calls from outside REAPER.
 
@@ -54,7 +57,11 @@ class inside_reaper(contextlib.ContextDecorator):
 
     """
 
-    def __call__(self, func, encoded_func=None):
+    def __call__(
+        self,
+        func: F,
+        encoded_func: ty.Optional[ty.Dict[str, object]] = None
+    ) -> F:
         if reapy.is_inside_reaper():
             return func
         if isinstance(func, property):
@@ -62,20 +69,22 @@ class inside_reaper(contextlib.ContextDecorator):
         # Check if the decorated function is from reapy
         module_name = func.__module__
         if module_name == 'reapy' or module_name.startswith('reapy.'):
+
             @functools.wraps(func)
             def wrap(*args, **kwargs):
                 f = func if encoded_func is None else encoded_func
                 client = machines.get_selected_client()
                 return client.request(f, {"args": args, "kwargs": kwargs})
+
             return wrap
         # Otherwise, use the context manager
         return super().__call__(func)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         if not reapy.is_inside_reaper():
             machines.get_selected_client().request("HOLD")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # type: ignore
         if not reapy.is_inside_reaper():
             machines.get_selected_client().request("RELEASE")
         return False
@@ -86,28 +95,28 @@ class DistProperty(property):
     _inside_reaper = inside_reaper()
 
     @classmethod
-    def from_property(cls, p):
+    def from_property(cls, p: property) -> property:
         return cls().getter(p.fget).setter(p.fset).deleter(p.fdel)
 
     @staticmethod
-    def _encode(f, method_name):
+    def _encode(f: F, method_name: str) -> ty.Dict[str, object]:
         return {
             "__callable__": True,
             "module_name": f.__module__,
             "name": "{}.f{}".format(f.__qualname__, method_name)
         }
 
-    def getter(self, fget):
+    def getter(self, fget: F) -> property:
         if fget is not None:
             fget = self._inside_reaper(fget, self._encode(fget, "get"))
         return super().getter(fget)
 
-    def setter(self, fset):
+    def setter(self, fset: F) -> property:
         if fset is not None:
             fset = self._inside_reaper(fset, self._encode(fset, "set"))
         return super().setter(fset)
 
-    def deleter(self, fdel):
+    def deleter(self, fdel: F) -> property:
         if fdel is not None:
             fdel = self._inside_reaper(fdel, self._encode(fdel, "del"))
         return super().deleter(fdel)

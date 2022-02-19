@@ -25,6 +25,7 @@ __all__ = [
     'get_resource_path',
     'get_user_inputs',
     'has_ext_state',
+    'is_valid_id',
     'open_project',
     'perform_action',
     'prevent_ui_refresh',

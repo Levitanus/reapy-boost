@@ -1,11 +1,17 @@
 import builtins
 import functools
+import typing as ty
 
 import reapy
 
 
 @reapy.inside_reaper()
-def map(function, *iterables, constants={}, kwargs_iterable=None):
+def map(
+    function: ty.Callable,
+    *iterables: ty.Iterable,
+    constants: ty.Mapping[str, ty.Any] = ...,
+    kwargs_iterable: ty.Optional[ty.Iterable[ty.Mapping[str, ty.Any]]] = ...
+) -> list:
     """Efficiently map a function to iterables of arguments.
 
     From outside REAPER, reapy function calls are sent over the
@@ -57,14 +63,15 @@ def map(function, *iterables, constants={}, kwargs_iterable=None):
     >>> with reapy.inside_reaper():
     ...     start_time = time.time()
     ...     ppqs = [take.time_to_ppq(time) for time in range(10**5)]
-    ...     print(f'Elapsed time without reapy.map: {time.time() - start_time:.1f} s.')
+    ...     print(f'Elapsed time without reapy.map: {time.time() -\
+                    start_time:.1f} s.')
     ...
     Elapsed time without reapy.map: 15.0 s.
     >>>
     >>> start_time = time.time()
     >>> ppqs = reapy.map(take.time_to_ppq, list(range(10**5)))
-    >>> print(f'Elapsed time with reapy.map: {time.time() - start_time:.1f} s.')
-    Elapsed time with reapy.map: 0.7 s.
+    >>> print(f'Elapsed time with reapy.map: {time.time() - start_time:.1f}s.')
+    Elapsed time with reapy.map: 0.7s.
     """
     if kwargs_iterable is None:
         kwargs_iterable = iter(dict, None)

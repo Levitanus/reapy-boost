@@ -30,9 +30,9 @@ except ImportError:
 __all__: ty.List[str] = [
 "Pointer",
     "VoidPtr",
-    "AudioWriter",
-    "PCM_source",
     "LICE_IBitmap",
+    "PCM_source",
+    "AudioWriter",
     "ReaScriptAPI_Version",
     "Localize",
     "Mem_Alloc",

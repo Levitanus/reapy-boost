@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import reapy
 import reapy.reascript_api as RPR
 from reapy.core import ReapyObject
@@ -5,19 +6,19 @@ from reapy.core import ReapyObject
 
 class AudioAccessor(ReapyObject):
 
-    def __init__(self, id):
+    def __init__(self, id: int) -> None:
         self.id = id
 
     @property
-    def _args(self):
+    def _args(self) -> Tuple[int]:
         return self.id,
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete audio accessor."""
-        RPR.DestroyAudioAccessor(self.id)
+        RPR.DestroyAudioAccessor(self.id)  # type:ignore
 
     @property
-    def end_time(self):
+    def end_time(self) -> float:
         """
         End time of audio that can be returned from this accessor.
 
@@ -25,11 +26,15 @@ class AudioAccessor(ReapyObject):
 
         :type: float
         """
-        return RPR.GetAudioAccessorEndTime(self.id)
+        return RPR.GetAudioAccessorEndTime(self.id)  # type:ignore
 
     def get_samples(
-        self, start, n_samples_per_channel, n_channels=1, sample_rate=44100
-     ):
+        self,
+        start: float,
+        n_samples_per_channel: int,
+        n_channels: int = 1,
+        sample_rate: int = 44100
+    ) -> List[float]:
         """
         Return audio samples.
 
@@ -52,37 +57,37 @@ class AudioAccessor(ReapyObject):
         Examples
         --------
         To separate channels use:
-        
+
         >>> samples = audio_accessor.get_samples(0, 1024, 2)
         >>> first_channel = samples[::2]
         >>> second_channel = samples[1::2]
         """
         buffer = [0]*n_channels*n_samples_per_channel
-        samples = RPR.GetAudioAccessorSamples(
+        samples = RPR.GetAudioAccessorSamples(  # type:ignore
             self.id, sample_rate, n_channels, start, n_samples_per_channel,
             buffer
         )[1]
         return samples
 
     @property
-    def has_state_changed(self):
+    def has_state_changed(self) -> float:
         """
         Whether underlying state has changed.
 
         :type: bool
         """
-        return bool(RPR.AudioAccessorValidateState(self.id))
+        return bool(RPR.AudioAccessorValidateState(self.id))  # type:ignore
 
-    def hash(self):
+    def hash(self) -> str:
         """
         String that changes only if the underlying samples change.
 
         :type: str
         """
-        return RPR.GetAudioAccessorHash(self.id, "")[1]
+        return RPR.GetAudioAccessorHash(self.id, "")[1]  # type:ignore
 
     @property
-    def start_time(self):
+    def start_time(self) -> float:
         """
         Start time of audio that can be returned from this accessor.
 
@@ -90,4 +95,4 @@ class AudioAccessor(ReapyObject):
 
         :type: float
         """
-        return RPR.GetAudioAccessorStartTime(self.id)
+        return RPR.GetAudioAccessorStartTime(self.id)  # type:ignore

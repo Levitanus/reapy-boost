@@ -1,22 +1,28 @@
+from typing import Dict, Optional
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
+import reapy
 
 
 class AutomationItem(ReapyObject):
 
     _class_name = "AutomationItem"
 
-    def __init__(self, envelope=None, index=0, envelope_id=None):
+    def __init__(self, envelope: Optional['reapy.Envelope'] = None,
+                 index: int = 0, envelope_id: int = None) -> None:
         if envelope is not None:
             envelope_id = envelope.id
+        if envelope_id is None:
+            raise TypeError(
+                'Either envelope or envelope_id has to be specified')
         self.envelope_id = envelope_id
         self.index = index
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> Dict[str, int]:
         return {"index": self.index, "envelope_id": self.envelope_id}
 
-    def delete_points_in_range(self, start, end):
+    def delete_points_in_range(self, start: float, end: float) -> None:
         """
         Delete points between `start` and `end`.
 
@@ -27,12 +33,12 @@ class AutomationItem(ReapyObject):
         end : float
             Range end in seconds.
         """
-        RPR.DeleteEnvelopePointRangeEx(
+        RPR.DeleteEnvelopePointRangeEx(  # type:ignore
             self.envelope_id, self.index, start, end
         )
 
     @property
-    def length(self):
+    def length(self) -> float:
         """
         Return item length in seconds.
 
@@ -41,13 +47,13 @@ class AutomationItem(ReapyObject):
         length : float
             Item length in seconds.
         """
-        length = RPR.GetSetAutomationItemInfo(
+        length = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_LENGTH", 0, False
         )
         return length
 
     @length.setter
-    def length(self, length):
+    def length(self, length: float) -> None:
         """
         Set item length.
 
@@ -56,12 +62,12 @@ class AutomationItem(ReapyObject):
         length : float
             New item length in seconds.
         """
-        success = RPR.GetSetAutomationItemInfo(
+        success = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_LENGTH", length, True
         )
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         """
         Return number of automation points in item.
 
@@ -70,11 +76,12 @@ class AutomationItem(ReapyObject):
         n_points : int
             Number of automation points in item.
         """
-        n_points = RPR.CountEnvelopePointsEx(self.envelope_id, self.index)
+        n_points = RPR.CountEnvelopePointsEx(  # type:ignore
+            self.envelope_id, self.index)
         return n_points
 
     @property
-    def pool(self):
+    def pool(self) -> int:
         """
         Return item pool.
 
@@ -83,13 +90,13 @@ class AutomationItem(ReapyObject):
         pool : int
             Item pool.
         """
-        pool = RPR.GetSetAutomationItemInfo(
+        pool = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_POOL", 0, False
         )
         return pool
 
     @pool.setter
-    def pool(self, pool):
+    def pool(self, pool: int) -> None:
         """
         Set item pool.
 
@@ -98,12 +105,12 @@ class AutomationItem(ReapyObject):
         pool : int
             New item pool.
         """
-        success = RPR.GetSetAutomationItemInfo(
+        success = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_POOL", pool, True
         )
 
     @property
-    def position(self):
+    def position(self) -> float:
         """
         Return item position in seconds.
 
@@ -112,13 +119,13 @@ class AutomationItem(ReapyObject):
         position : float
             Item position in seconds.
         """
-        position = RPR.GetSetAutomationItemInfo(
+        position = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_POSITION", 0, False
         )
         return position
 
     @position.setter
-    def position(self, position):
+    def position(self, position: float) -> None:
         """
         Set item position.
 
@@ -127,6 +134,6 @@ class AutomationItem(ReapyObject):
         position : float
             New item position in seconds.
         """
-        success = RPR.GetSetAutomationItemInfo(
+        success = RPR.GetSetAutomationItemInfo(  # type:ignore
             self.envelope_id, self.index, "D_POSITION", position, True
         )

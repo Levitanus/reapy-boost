@@ -2,6 +2,7 @@ import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
 from reapy.tools import depends_on_sws
+import typing as ty
 
 
 class Send(ReapyObject):
@@ -20,7 +21,13 @@ class Send(ReapyObject):
 
     _class_name = "Send"
 
-    def __init__(self, track=None, index=0, track_id=None, type="send"):
+    def __init__(
+        self,
+        track: ty.Optional['reapy.Track'] = None,
+        index: int = 0,
+        track_id: ty.Optional[ty.Union[str, int]] = None,
+        type: str = "send"
+    ) -> None:
         if track_id is None:
             message = "One of `track` or `track_id` must be specified."
             assert track is not None, message
@@ -29,7 +36,7 @@ class Send(ReapyObject):
         self.track_id = track_id
         self.type = type
 
-    def _get_int_type(self):
+    def _get_int_type(self) -> int:
         types = {
             "hardware": 1,
             "send": 0,
@@ -39,21 +46,22 @@ class Send(ReapyObject):
         return int_type
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> ty.Dict[str, object]:
         return {
             "index": self.index,
             "track_id": self.track_id,
             "type": self.type
         }
 
-    def delete(self):
+    def delete(self) -> bool:  # type:ignore
         """
         Delete send.
         """
-        RPR.RemoveTrackSend(self.track_id, self._get_int_type(), self.index)
+        RPR.RemoveTrackSend(  # type:ignore
+            self.track_id, self._get_int_type(), self.index)
 
     @property
-    def dest_track(self):
+    def dest_track(self) -> 'reapy.Track':
         """
         Destination track.
 
@@ -64,13 +72,13 @@ class Send(ReapyObject):
         return reapy.Track(track_id)
 
     @reapy.inside_reaper()
-    def flip_phase(self):
+    def flip_phase(self) -> None:
         """
         Toggle whether phase is flipped.
         """
         self.is_phase_flipped = not self.is_phase_flipped
 
-    def get_info(self, param_name):
+    def get_info(self, param_name: str) -> ty.Union[bool, int, str]:
         """Get raw info from GetTrackSendInfo_Value.
 
         Parameters
@@ -105,13 +113,12 @@ class Send(ReapyObject):
         -------
         Union[bool, track id(str)]
         """
-        value = RPR.GetTrackSendInfo_Value(
-            self.track_id, self._get_int_type(), self.index, param_name
-        )
+        value = RPR.GetTrackSendInfo_Value(  # type:ignore
+            self.track_id, self._get_int_type(), self.index, param_name)
         return value
 
     @depends_on_sws
-    def get_sws_info(self, param_name):
+    def get_sws_info(self, param_name: str) -> float:
         """Raw value from BR_GetSetTrackSendInfo.
 
         Parameters
@@ -148,14 +155,13 @@ class Send(ReapyObject):
         -------
         float
         """
-        value = RPR.BR_GetSetTrackSendInfo(
+        value = RPR.BR_GetSetTrackSendInfo(  # type:ignore
             self.track_id, self._get_int_type(), self.index, param_name, False,
-            0.0
-        )
+            0.0)
         return value
 
     @property
-    def is_mono(self):
+    def is_mono(self) -> bool:
         """
         Whether send is mono or stereo.
 
@@ -165,11 +171,11 @@ class Send(ReapyObject):
         return is_mono
 
     @is_mono.setter
-    def is_mono(self, mono):
+    def is_mono(self, mono: bool) -> None:
         self.set_info("B_MONO", mono)
 
     @property
-    def is_muted(self):
+    def is_muted(self) -> bool:
         """
         Whether send is muted.
 
@@ -179,7 +185,7 @@ class Send(ReapyObject):
         return is_muted
 
     @is_muted.setter
-    def is_muted(self, is_muted):
+    def is_muted(self, is_muted: bool) -> None:
         """
         Mute or unmute send.
 
@@ -191,7 +197,7 @@ class Send(ReapyObject):
         self.set_info("B_MUTE", is_muted)
 
     @property
-    def is_phase_flipped(self):
+    def is_phase_flipped(self) -> bool:
         """
         Whether send phase is flipped (i.e. signal multiplied by -1).
 
@@ -201,11 +207,13 @@ class Send(ReapyObject):
         return is_phase_flipped
 
     @is_phase_flipped.setter
-    def is_phase_flipped(self, flipped):
+    def is_phase_flipped(self, flipped: bool) -> None:
         self.set_info("B_PHASE", flipped)
 
     @property
-    def _midi_flags_unpacked(self):
+    def _midi_flags_unpacked(
+        self
+    ) -> ty.Tuple[ty.Tuple[int, int], ty.Tuple[int, int]]:
         flags = int(self.get_info('I_MIDIFLAGS'))
         if flags == 0b1111111100000000011111:
             return ((-1, -1), (-1, -1))
@@ -221,7 +229,9 @@ class Send(ReapyObject):
         return ((src_bus, src_ch), (dst_bus, dst_ch))
 
     @_midi_flags_unpacked.setter
-    def _midi_flags_unpacked(self, in_tuple):
+    def _midi_flags_unpacked(
+        self, in_tuple: ty.Tuple[ty.Tuple[int, int], ty.Tuple[int, int]]
+    ) -> None:
         src_bus, src_ch, dst_bus, dst_ch = (*in_tuple[0], *in_tuple[1])
         dst_ch <<= 5
         src_bus <<= 14
@@ -232,7 +242,7 @@ class Send(ReapyObject):
         self.set_info('I_MIDIFLAGS', flags)
 
     @property
-    def midi_source(self):
+    def midi_source(self) -> ty.Tuple[int, int]:
         """
         Send MIDI properties on the send track.
 
@@ -240,16 +250,19 @@ class Send(ReapyObject):
         -------
         Tuple[int bus, int channel]
         """
-        return tuple(self._midi_flags_unpacked[0])
+        return self._midi_flags_unpacked[0]
 
     @midi_source.setter
+    def midi_source(self, source: ty.Tuple[int, int]) -> None:
+        return self._midi_source_inside(source)
+
     @reapy.inside_reaper()
-    def midi_source(self, source):
+    def _midi_source_inside(self, source: ty.Tuple[int, int]) -> None:
         dest = self._midi_flags_unpacked[1]
         self._midi_flags_unpacked = (source, dest)
 
     @property
-    def midi_dest(self):
+    def midi_dest(self) -> ty.Tuple[int, int]:
         """
         Send MIDI properties on the receive track.
 
@@ -257,32 +270,35 @@ class Send(ReapyObject):
         -------
         Tuple[int bus, int channel]
         """
-        return tuple(self._midi_flags_unpacked[1])
+        return self._midi_flags_unpacked[1]
 
     @midi_dest.setter
+    def midi_dest(self, dest: ty.Tuple[int, int]) -> None:
+        return self._midi_dest_inside(dest)
+
     @reapy.inside_reaper()
-    def midi_dest(self, dest):
+    def _midi_dest_inside(self, dest: ty.Tuple[int, int]) -> None:
         source = self._midi_flags_unpacked[0]
         self._midi_flags_unpacked = (source, dest)
 
-    def mute(self):
+    def mute(self) -> None:
         """
         Mute send.
         """
         self.is_muted = True
 
     @property
-    def pan(self):
+    def pan(self) -> float:
         """
         Send pan (from -1=left to 1=right).
 
         :type: float
         """
-        pan = self.get_info("D_PAN")
+        pan = ty.cast(float, self.get_info("D_PAN"))
         return pan
 
     @pan.setter
-    def pan(self, pan):
+    def pan(self, pan: float) -> None:
         """
         Set send pan.
 
@@ -293,45 +309,45 @@ class Send(ReapyObject):
         """
         self.set_info("D_PAN", pan)
 
-    def set_info(self, param_name, value):
-        RPR.SetTrackSendInfo_Value(
-            self.track_id, self._get_int_type(), self.index, param_name, value
-        )
+    def set_info(self, param_name: str, value: ty.Union[bool, float]) -> None:
+        RPR.SetTrackSendInfo_Value(  # type:ignore
+            self.track_id, self._get_int_type(), self.index, param_name, value)
 
     @depends_on_sws
-    def set_sws_info(self, param_name, value):
-        RPR.BR_GetSetTrackSendInfo(
+    def set_sws_info(
+        self, param_name: str, value: ty.Union[bool, float]
+    ) -> None:
+        RPR.BR_GetSetTrackSendInfo(  # type:ignore
             self.track_id, self._get_int_type(), self.index, param_name, True,
-            value
-        )
+            value)
 
     @property
-    def source_track(self):
+    def source_track(self) -> 'reapy.Track':
         """
         Source track.
 
         :type: Track
         """
-        pointer = self.get_info('P_SRCTRACK')
+        pointer = ty.cast(str, self.get_info('P_SRCTRACK'))
         track_id = reapy.Track._get_id_from_pointer(pointer)
         return reapy.Track(track_id)
 
-    def unmute(self):
+    def unmute(self) -> None:
         """
         Unmute send.
         """
         self.is_muted = False
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """
         Send volume.
 
         :type: float
         """
-        volume = self.get_info("D_VOL")
+        volume = ty.cast(float, self.get_info("D_VOL"))
         return volume
 
     @volume.setter
-    def volume(self, volume):
+    def volume(self, volume: float) -> None:
         self.set_info("D_VOL", volume)

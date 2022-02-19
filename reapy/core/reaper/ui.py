@@ -4,7 +4,7 @@ import reapy
 import reapy.reascript_api as RPR
 
 
-def get_color_theme():
+def get_color_theme() -> str:
     """
     Return path to last color theme file.
 
@@ -13,15 +13,15 @@ def get_color_theme():
     color_theme : str
         Path to last color theme file.
     """
-    return RPR.GetLastColorThemeFile()
+    return RPR.GetLastColorThemeFile()  # type:ignore
 
 
-def get_leftmost_track_in_mixer():
+def get_leftmost_track_in_mixer() -> 'reapy.Track':
     """Return leftmost track in mixer."""
-    return reapy.Track(RPR.GetMixerScroll())
+    return reapy.Track(RPR.GetMixerScroll())  # type:ignore
 
 
-def set_color_theme(path):
+def set_color_theme(path: str) -> None:
     """
     Set REAPER color theme.
 
@@ -30,10 +30,10 @@ def set_color_theme(path):
     path : str
         Path to color theme file.
     """
-    RPR.OpenColorThemeFile(path)
+    RPR.OpenColorThemeFile(path)  # type:ignore
 
 
-def set_leftmost_track_in_mixer(track):
+def set_leftmost_track_in_mixer(track: 'reapy.Track') -> None:
     """Set leftmost track in mixer.
 
     The actual leftmost track in mixer might be different after
@@ -45,4 +45,4 @@ def set_leftmost_track_in_mixer(track):
     track : Track
         Track to set as leftmost track in mixer.
     """
-    RPR.SetMixerScroll(track.id)
+    RPR.SetMixerScroll(track.id)  # type:ignore

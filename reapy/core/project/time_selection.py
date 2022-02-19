@@ -1,3 +1,4 @@
+from typing import Dict, Optional, Tuple
 import reapy
 from reapy import reascript_api as RPR
 from reapy.core import ReapyObject
@@ -7,7 +8,11 @@ class TimeSelection(ReapyObject):
 
     _class_name = "TimeSelection"
 
-    def __init__(self, parent_project=None, parent_project_id=None):
+    def __init__(
+        self,
+        parent_project: Optional['reapy.Project'] = None,
+        parent_project_id: Optional[str] = None
+    ):
         if parent_project_id is None:
             message = (
                 "One of `parent_project` or `parent_project_id` must be "
@@ -15,40 +20,50 @@ class TimeSelection(ReapyObject):
             )
             assert parent_project is not None, message
             parent_project_id = parent_project.id
-        self.project_id = parent_project_id
+        self.project_id: str = parent_project_id
 
-    def _get_infos(self):
+    def _get_infos(self) -> Tuple[str, bool, bool, float, float, bool]:
         """
         Return infos as returned by RPR.GetSet_LoopTimeRange2.
 
         Returns
         -------
         infos : tuple
-            Time selection infos.
+            str: proj_id
+            bool: isSet (False)
+            bool: isLoop
+            float: start
+            float: end
+            bool: allowautoseek
         """
-        infos = RPR.GetSet_LoopTimeRange2(
+        infos = RPR.GetSet_LoopTimeRange2(  # type:ignore
             self.project_id, False, False, 0, 0, False
         )
-        return infos
+        return infos  # type:ignore
 
-    def _set_start_end(self, start=None, end=None):
-        infos = list(RPR.GetSet_LoopTimeRange2(
-            self.project_id, False, False, 0, 0, False
-        ))
+    def _set_start_end(
+        self,
+        start: Optional[float] = None,
+        end: Optional[float] = None
+    ) -> None:
+        infos = list(
+            RPR.GetSet_LoopTimeRange2(  # type:ignore
+                self.project_id, False, False, 0, 0, False
+            )
+        )
         if start is None:
             start = infos[3]
         if end is None:
             end = infos[4]
         infos[1], infos[3], infos[4] = True, start, end
-        RPR.GetSet_LoopTimeRange2(*infos)
+        RPR.GetSet_LoopTimeRange2(*infos)  # type:ignore
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> Dict[str, str]:  # type:ignore
         return {"parent_project_id": self.project_id}
 
-    @reapy.inside_reaper()
     @property
-    def end(self):
+    def end(self) -> float:
         """
         Return time selection end in seconds.
 
@@ -57,12 +72,16 @@ class TimeSelection(ReapyObject):
         end : float
             Time selection end in seconds.
         """
+        return self._end_inside()
+
+    @reapy.inside_reaper()
+    def _end_inside(self) -> float:
         infos = self._get_infos()
         end = infos[4]
         return end
 
     @end.setter
-    def end(self, end):
+    def end(self, end: float) -> None:
         """
         Set time selection end.
 
@@ -74,7 +93,7 @@ class TimeSelection(ReapyObject):
         self._set_start_end(end=end)
 
     @property
-    def is_looping(self):
+    def is_looping(self) -> bool:
         """
         Return whether looping is enabled.
 
@@ -83,11 +102,15 @@ class TimeSelection(ReapyObject):
         looping : bool
             Whether looping is enabled.
         """
-        is_looping = bool(RPR.GetSetRepeatEx(self.project_id, -1))
+        is_looping = bool(
+            RPR.GetSetRepeatEx(  # type:ignore
+                self.project_id, -1
+            )
+        )
         return is_looping
 
     @is_looping.setter
-    def is_looping(self, is_looping):
+    def is_looping(self, is_looping: bool) -> None:
         """
         Sets whether time selection should loop.
 
@@ -101,9 +124,8 @@ class TimeSelection(ReapyObject):
         else:
             self.unloop()
 
-    @reapy.inside_reaper()
     @property
-    def length(self):
+    def length(self) -> float:
         """
         Return time selection length in seconds.
 
@@ -112,13 +134,17 @@ class TimeSelection(ReapyObject):
         length : float
             Time selection length in seconds.
         """
+        return self._length_inside()
+
+    @reapy.inside_reaper()
+    def _length_inside(self) -> float:
         infos = self._get_infos()
         start, end = infos[3:5]
         length = end - start
         return length
 
     @length.setter
-    def length(self, length):
+    def length(self, length: float) -> None:
         """
         Set time selection length (by moving its end).
 
@@ -127,13 +153,15 @@ class TimeSelection(ReapyObject):
         length : float
             Time selection length in seconds.
         """
-        infos = list(RPR.GetSet_LoopTimeRange2(
-            self.project_id, False, False, 0, 0, False
-        ))
+        infos = list(
+            RPR.GetSet_LoopTimeRange2(  # type:ignore
+                self.project_id, False, False, 0, 0, False
+            )
+        )
         infos[1], infos[4] = True, infos[3] + length
-        RPR.GetSet_LoopTimeRange2(*infos)
+        RPR.GetSet_LoopTimeRange2(*infos)  # type:ignore
 
-    def loop(self):
+    def loop(self) -> None:
         """
         Enable time selection looping.
 
@@ -142,11 +170,10 @@ class TimeSelection(ReapyObject):
         TimeSelection.is_looping
         TimeSelection.unloop
         """
-        RPR.GetSetRepeatEx(self.project_id, 1)
+        RPR.GetSetRepeatEx(self.project_id, 1)  # type:ignore
 
-    @reapy.inside_reaper()
     @property
-    def start(self):
+    def start(self) -> float:
         """
         Return time selection start in seconds.
 
@@ -155,12 +182,16 @@ class TimeSelection(ReapyObject):
         start : float
             Time selection start in seconds.
         """
+        return self._start_inside()
+
+    @reapy.inside_reaper()
+    def _start_inside(self) -> float:
         infos = self._get_infos()
         start = infos[3]
         return start
 
     @start.setter
-    def start(self, start):
+    def start(self, start: float) -> None:
         """
         Set time selection start.
 
@@ -171,7 +202,7 @@ class TimeSelection(ReapyObject):
         """
         self._set_start_end(start)
 
-    def shift(self, direction=""):
+    def shift(self, direction: str = "") -> None:
         """
         Shift time selection.
 
@@ -184,11 +215,11 @@ class TimeSelection(ReapyObject):
             and of the zoom level.
         """
         if direction == "right":
-            RPR.Loop_OnArrow(self.project_id, 1)
+            RPR.Loop_OnArrow(self.project_id, 1)  # type:ignore
         elif direction == "left":
-            RPR.Loop_OnArrow(self.project_id, -1)
+            RPR.Loop_OnArrow(self.project_id, -1)  # type:ignore
 
-    def unloop(self):
+    def unloop(self) -> None:
         """
         Disable time selection looping.
 
@@ -197,4 +228,4 @@ class TimeSelection(ReapyObject):
         TimeSelection.is_looping
         TimeSelection.loop
         """
-        RPR.GetSetRepeatEx(self.project_id, 0)
+        RPR.GetSetRepeatEx(self.project_id, 0)  # type:ignore

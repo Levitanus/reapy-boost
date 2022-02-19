@@ -7,6 +7,8 @@ import reapy
 import reapy.reascript_api as RPR
 from reapy.core import ReapyObject, ReapyObjectList
 
+T1 = ty.TypeVar('T1', bound='MIDIEvent')
+
 
 class CCShapeFlag(IntFlag):
     square = 0
@@ -17,7 +19,7 @@ class CCShapeFlag(IntFlag):
     beizer = 16 | 64
 
     @classmethod
-    def from_shape(cls, shape):
+    def from_shape(cls, shape: 'CCShape') -> 'CCShapeFlag':
         """
         Get flags from int enum.
 
@@ -42,6 +44,7 @@ class CCShapeFlag(IntFlag):
             return cls.fast_end
         if shape == CCShape.beizer.value:
             return cls.beizer
+        raise ValueError(f"Can't return flag for {shape}")
 
 
 class CCShape(IntEnum):
@@ -53,7 +56,7 @@ class CCShape(IntEnum):
     beizer = 5
 
     @classmethod
-    def from_flag(cls, flag):
+    def from_flag(cls, flag: CCShapeFlag) -> 'CCShape':
         """
         Get IntEnum from IntFlag.
 
@@ -77,10 +80,10 @@ class CCShape(IntEnum):
             return cls.fast_end
         if flag == CCShapeFlag.beizer.value:
             return cls.beizer
+        raise ValueError(f"Can't return shape for {flag}")
 
 
 class MIDIEventDict(te.TypedDict):
-
     """
     Dict, represents trsferable midi event.
 
@@ -109,12 +112,13 @@ class MIDIEventInfo(te.TypedDict):
 
 
 class MIDIEvent(ReapyObject):
-
     """Abstract class for MIDI events."""
 
     _del_func_name = 'MIDI_DeleteEvt'
+    index: int
+    parent: 'reapy.Take'
 
-    def __init__(self, parent, index):
+    def __init__(self, parent: 'reapy.Take', index: int) -> None:
         """
         Create event.
 
@@ -130,11 +134,11 @@ class MIDIEvent(ReapyObject):
         self.parent = parent
 
     @property
-    def _args(self):
+    def _args(self) -> ty.Tuple['reapy.Take', int]:
         return self.parent, self.index
 
     @property
-    def as_dict(self):
+    def as_dict(self) -> ty.Tuple[MIDIEventDict, ...]:
         """
         Representation of event in a dict.
 
@@ -146,21 +150,23 @@ class MIDIEvent(ReapyObject):
         :type: Tuple[MIDIEventDict]
         """
         infos = self.infos
-        return (MIDIEventDict(
-            ppq=infos['ppq_position'],
-            selected=bool(infos['selected']),
-            muted=bool(infos['muted']),
-            cc_shape=CCShapeFlag(0),
-            buf=infos['raw_message'],
-        ),)
+        return (
+            MIDIEventDict(
+                ppq=infos['ppq_position'],
+                selected=bool(infos['selected']),
+                muted=bool(infos['muted']),
+                cc_shape=CCShapeFlag(0),
+                buf=infos['raw_message'],
+            ),
+        )
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete event from the take."""
         f = getattr(RPR, self._del_func_name)
         f(self.parent.id, self.index)
 
     @property
-    def infos(self):
+    def infos(self) -> MIDIEventInfo:
         """
         Event info as dict.
 
@@ -174,7 +180,8 @@ class MIDIEvent(ReapyObject):
         take = self.parent
         max_eventbuf_length = 65000
         _, _, _, selected, muted, ppqpos, msg, _ = RPR.MIDI_GetEvt(
-            take.id, self.index, 0, 0, 0.0, '', max_eventbuf_length)
+            take.id, self.index, 0, 0, 0.0, '', max_eventbuf_length
+        )
         return MIDIEventInfo(
             selected=bool(selected),
             muted=bool(muted),
@@ -184,9 +191,16 @@ class MIDIEvent(ReapyObject):
         )
 
     @reapy.inside_reaper()
-    def set(self, selected=None,
-            muted=None, position=None, sort=True,
-            raw_message=None, *, time_unit="seconds"):
+    def set(
+        self,
+        selected: ty.Optional[bool] = None,
+        muted: ty.Optional[bool] = None,
+        position: ty.Optional[float] = None,
+        sort: ty.Optional[bool] = True,
+        raw_message: ty.Optional[ty.List[int]] = None,
+        *,
+        time_unit: str = "seconds"
+    ) -> None:
         """
         Set properties of event if needed.
 
@@ -217,7 +231,7 @@ class MIDIEvent(ReapyObject):
         """
         take = self.parent
         if position:
-            position = take._resolve_midi_unit((position,), time_unit)[0]
+            position = take._resolve_midi_unit((position, ), time_unit)[0]
         if raw_message:
             raw_message = take._midi_to_bytestr(raw_message)
         RPR.MIDI_SetEvt(
@@ -226,9 +240,10 @@ class MIDIEvent(ReapyObject):
         )
 
 
-class MIDIEventList(ReapyObjectList):
+class MIDIEventList(ReapyObjectList, ty.Generic[T1]):
+    parent: 'reapy.Take'
 
-    def __init__(self, parent):
+    def __init__(self, parent: 'reapy.Take') -> None:
         """
         Create event list.
 
@@ -239,25 +254,30 @@ class MIDIEventList(ReapyObjectList):
         """
         self.parent = parent
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> T1:
         with reapy.inside_reaper():
             if key >= len(self):
                 raise IndexError
             return self._elements_class(self.parent, key)
+        raise RuntimeError()
 
-    def __len__(self):
-        return getattr(self.parent, self._n_elements)
+    def __len__(self) -> int:
+        return ty.cast(int, getattr(self.parent, self._n_elements))
+
+    def __iter__(self) -> ty.Iterator[T1]:
+        for i in range(len(self)):
+            yield self[i]
 
     @property
-    def _args(self):
+    def _args(self) -> ty.Tuple['reapy.Take']:
         return self.parent,
 
     @property
-    def _elements_class(self):
+    def _elements_class(self) -> ty.Type[T1]:
         return MIDIEvent
 
     @property
-    def _n_elements(self):
+    def _n_elements(self) -> str:
         return 'n_midi_events'
 
 
@@ -268,13 +288,12 @@ class CCInfo(MIDIEventInfo):
 
 
 class CC(MIDIEvent):
-
     """MIDI CC event."""
 
     _del_func_name = 'MIDI_DeleteCC'
 
     @property
-    def as_dict(self):
+    def as_dict(self) -> ty.Tuple[MIDIEventDict, ...]:
         """
         Representation of event in a dict.
 
@@ -303,10 +322,10 @@ class CC(MIDIEvent):
                 buf=list(b'\xff\x0fCCBZ\x00' + struct.pack('<f', shape[1])),
             )
             return evt1, evt2
-        return (evt1,)
+        return (evt1, )
 
     @property
-    def channel(self):
+    def channel(self) -> int:
         """
         CC channel between 0 and 15.
 
@@ -321,11 +340,11 @@ class CC(MIDIEvent):
         return self.infos['channel']
 
     @channel.setter
-    def channel(self, channel):
+    def channel(self, channel: int) -> None:
         self.set(channel=channel)
 
     @property
-    def channel_message(self):
+    def channel_message(self) -> int:
         """
         CC channel message.
 
@@ -340,12 +359,12 @@ class CC(MIDIEvent):
         return self.infos['channel_message']
 
     @channel_message.setter
-    def channel_message(self, channel_message):
+    def channel_message(self, channel_message: int) -> None:
         self.set(channel_message=channel_message)
 
     @reapy.inside_reaper()
     @property
-    def infos(self):
+    def infos(self) -> CCInfo:
         """
         Return infos about CC.
 
@@ -360,9 +379,8 @@ class CC(MIDIEvent):
             messages: Tuple[int, int]
         """
         take = self.parent
-        res = list(RPR.MIDI_GetCC(
-            take.id, self.index, 0, 0, 0, 0, 0, 0, 0
-        ))[3:]
+        res = list(RPR.MIDI_GetCC(take.id, self.index, 0, 0, 0, 0, 0, 0,
+                                  0))[3:]
         return CCInfo(
             selected=bool(res[0]),
             muted=bool(res[1]),
@@ -375,7 +393,7 @@ class CC(MIDIEvent):
         )
 
     @property
-    def messages(self):
+    def messages(self) -> ty.Tuple[int, int]:
         """
         CC messages.
 
@@ -390,11 +408,11 @@ class CC(MIDIEvent):
         return self.infos['messages']
 
     @messages.setter
-    def messages(self, messages):
+    def messages(self, messages: ty.Tuple[int, int]) -> None:
         self.set(messages=messages)
 
     @property
-    def muted(self):
+    def muted(self) -> bool:
         """
         Whether CC is muted.
 
@@ -409,11 +427,11 @@ class CC(MIDIEvent):
         return self.infos['muted']
 
     @muted.setter
-    def muted(self, muted):
+    def muted(self, muted: bool) -> None:
         self.set(muted=muted)
 
     @property
-    def position(self):
+    def position(self) -> float:
         """
         CC position in seconds.
 
@@ -428,11 +446,11 @@ class CC(MIDIEvent):
         return self.infos["position"]
 
     @position.setter
-    def position(self, position):
+    def position(self, position: float) -> None:
         self.set(position=position)
 
     @property
-    def selected(self):
+    def selected(self) -> bool:
         """
         Whether CC is selected.
 
@@ -447,14 +465,23 @@ class CC(MIDIEvent):
         return self.infos['selected']
 
     @selected.setter
-    def selected(self, selected):
+    def selected(self, selected: bool) -> None:
         self.set(selected=selected)
 
     @reapy.inside_reaper()
-    def set(self, selected=None,
-            muted=None, position=None, sort=True,
-            raw_message=None, channel_message=None,
-            channel=None, messages=None, *, time_unit="seconds"):
+    def set(
+        self,
+        selected: ty.Optional[bool] = None,
+        muted: ty.Optional[bool] = None,
+        position: ty.Optional[float] = None,
+        sort: ty.Optional[bool] = True,
+        raw_message: ty.Optional[ty.List[int]] = None,
+        channel_message: ty.Optional[int] = None,
+        channel: ty.Optional[int] = None,
+        messages: ty.Optional[ty.List[int]] = None,
+        *,
+        time_unit: str = "seconds"
+    ) -> None:
         """
         Set properties of event if needed.
 
@@ -490,7 +517,7 @@ class CC(MIDIEvent):
         """
         take = self.parent
         if position:
-            position = take._resolve_midi_unit((position,), time_unit)[0]
+            position = take._resolve_midi_unit((position, ), time_unit)[0]
         if sort is not None:
             sort = not sort
         if messages and not raw_message:
@@ -498,11 +525,13 @@ class CC(MIDIEvent):
         if raw_message:
             channel_message, msg2, msg3 = raw_message
             channel = None
-        RPR.MIDI_SetCC(take.id, self.index, selected, muted, position,
-                       channel_message, channel, msg2, msg3, sort)
+        RPR.MIDI_SetCC(
+            take.id, self.index, selected, muted, position, channel_message,
+            channel, msg2, msg3, sort
+        )
 
     @property
-    def shape(self):
+    def shape(self) -> ty.Tuple[CCShape, float]:
         """
         Shape type and beizer tension.
 
@@ -510,17 +539,18 @@ class CC(MIDIEvent):
             shape can be passed as enum instance or as int
         """
         _, _, _, shape_i, tension = RPR.MIDI_GetCCShape(
-            self.parent.id, self.index, 1, 0.1)
+            self.parent.id, self.index, 1, 0.1
+        )
         return CCShape(shape_i), tension
 
     @shape.setter
-    def shape(self, shape):
+    def shape(self, shape: CCShape) -> None:
         shape_i = CCShape(shape[0]).value
         tension = shape[1]
         RPR.MIDI_SetCCShape(self.parent.id, self.index, shape_i, tension, None)
 
 
-class CCList(MIDIEventList):
+class CCList(MIDIEventList[CC]):
 
     _elements_class = CC
     _n_elements = "n_cc"
@@ -535,13 +565,12 @@ class NoteInfo(MIDIEventInfo):
 
 
 class Note(MIDIEvent):
-
     """MIDI note."""
 
     _del_func_name = 'MIDI_DeleteNote'
 
     @property
-    def as_dict(self):
+    def as_dict(self) -> ty.Tuple[MIDIEventDict, MIDIEventDict]:
         """
         Representation of event in a dict.
 
@@ -554,24 +583,26 @@ class Note(MIDIEvent):
             note on and note off
         """
         infos = self.infos
-        off = [infos['raw_message'][0]-0x10, *infos['raw_message'][1:3]]
-        return (MIDIEventDict(
-            ppq=infos['ppq_position'],
-            selected=bool(infos['selected']),
-            muted=bool(infos['muted']),
-            cc_shape=CCShapeFlag(0),
-            buf=infos['raw_message'],
-        ),
+        off = [infos['raw_message'][0] - 0x10, *infos['raw_message'][1:3]]
+        return (
             MIDIEventDict(
-            ppq=infos['ppq_end'],
-            selected=bool(infos['selected']),
-            muted=bool(infos['muted']),
-            cc_shape=CCShapeFlag(0),
-            buf=off,
-        ))
+                ppq=infos['ppq_position'],
+                selected=bool(infos['selected']),
+                muted=bool(infos['muted']),
+                cc_shape=CCShapeFlag(0),
+                buf=infos['raw_message'],
+            ),
+            MIDIEventDict(
+                ppq=infos['ppq_end'],
+                selected=bool(infos['selected']),
+                muted=bool(infos['muted']),
+                cc_shape=CCShapeFlag(0),
+                buf=off,
+            )
+        )
 
     @property
-    def channel(self):
+    def channel(self) -> int:
         """
         Note channel between 0 and 15.
 
@@ -586,11 +617,11 @@ class Note(MIDIEvent):
         return self.infos['channel']
 
     @channel.setter
-    def channel(self, channel):
+    def channel(self, channel: int) -> None:
         self.set(channel=channel)
 
     @property
-    def end(self):
+    def end(self) -> float:
         """
         Note end in seconds.
 
@@ -605,11 +636,11 @@ class Note(MIDIEvent):
         return self.infos["end"]
 
     @end.setter
-    def end(self, end):
+    def end(self, end: float) -> None:
         self.set(end=end)
 
     @property
-    def infos(self):
+    def infos(self) -> NoteInfo:
         """
         Return infos about note.
 
@@ -626,16 +657,15 @@ class Note(MIDIEvent):
             velocity: int
         """
         take = self.parent
-        res = list(RPR.MIDI_GetNote(
-            take.id, self.index, 0, 0, 0, 0, 0, 0, 0
-        ))[3:]
+        res = list(RPR.MIDI_GetNote(take.id, self.index, 0, 0, 0, 0, 0, 0,
+                                    0))[3:]
         ch, note, vel = int(res[4]), int(res[5]), int(res[6])
         return NoteInfo(
             selected=bool(res[0]),
             muted=bool(res[1]),
             position=take.ppq_to_time(res[2]),
             ppq_position=res[2],
-            raw_message=[0x90+ch, note, vel],
+            raw_message=[0x90 + ch, note, vel],
             end=take.ppq_to_time(res[3]),
             ppq_end=res[3],
             channel=ch,
@@ -644,7 +674,7 @@ class Note(MIDIEvent):
         )
 
     @property
-    def muted(self):
+    def muted(self) -> bool:
         """
         Whether note is muted.
 
@@ -659,11 +689,11 @@ class Note(MIDIEvent):
         return self.infos['muted']
 
     @muted.setter
-    def muted(self, muted):
+    def muted(self, muted: bool) -> None:
         self.set(muted=muted)
 
     @property
-    def pitch(self):
+    def pitch(self) -> int:
         """
         Note pitch between 0 and 127.
 
@@ -678,11 +708,11 @@ class Note(MIDIEvent):
         return self.infos['pitch']
 
     @pitch.setter
-    def pitch(self, pitch):
+    def pitch(self, pitch: int) -> None:
         self.set(pitch=pitch)
 
     @property
-    def selected(self):
+    def selected(self) -> bool:
         """
         Whether note is selected.
 
@@ -697,14 +727,24 @@ class Note(MIDIEvent):
         return self.infos['selected']
 
     @selected.setter
-    def selected(self, selected):
+    def selected(self, selected: bool) -> None:
         self.set(selected=selected)
 
     @reapy.inside_reaper()
-    def set(self, selected=None,
-            muted=None, position=None, sort=True,
-            raw_message=None, end=None, channel=None,
-            pitch=None, velocity=None, *, time_unit="seconds"):
+    def set(
+        self,
+        selected: ty.Optional[bool] = None,
+        muted: ty.Optional[bool] = None,
+        position: ty.Optional[float] = None,
+        sort: ty.Optional[bool] = True,
+        raw_message: ty.Optional[ty.List[int]] = None,
+        end: ty.Optional[float] = None,
+        channel: ty.Optional[int] = None,
+        pitch: ty.Optional[int] = None,
+        velocity: ty.Optional[int] = None,
+        *,
+        time_unit: str = "seconds"
+    ) -> None:
         """
         Set properties of event if needed.
 
@@ -739,19 +779,21 @@ class Note(MIDIEvent):
         """
         take = self.parent
         if position:
-            position = take._resolve_midi_unit(time_unit)
+            position = take._resolve_midi_unit((position, ), time_unit)[0]
         if end:
-            end = take._resolve_midi_unit(time_unit)
+            end = take._resolve_midi_unit((end, ), time_unit)[0]
         if raw_message:
             rm = raw_message
-            chan, pitch, vel = rm[0] % 0x90, rm[1], rm[2]
+            channel, pitch, velocity = rm[0] % 0x90, rm[1], rm[2]
         if sort is not None:
             sort = not sort
-        RPR.MIDI_SetNote(take.id, self.index, selected, muted,
-                         position, end, chan, pitch, vel, sort)
+        RPR.MIDI_SetNote(
+            take.id, self.index, selected, muted, position, end, channel,
+            pitch, velocity, sort
+        )
 
     @property
-    def start(self):
+    def start(self) -> float:
         """
         Note start in seconds.
 
@@ -763,14 +805,14 @@ class Note(MIDIEvent):
             For maximum efficiency when querying several properties of
             a Note.
         """
-        return self.infos["start"]
+        return self.infos["position"]
 
     @start.setter
-    def start(self, start):
-        self.set(start=start)
+    def start(self, start: float) -> None:
+        self.set(position=start)
 
     @property
-    def velocity(self):
+    def velocity(self) -> int:
         """
         Note velocity between 0 and 127.
 
@@ -785,11 +827,11 @@ class Note(MIDIEvent):
         return self.infos['velocity']
 
     @velocity.setter
-    def velocity(self, velocity):
+    def velocity(self, velocity: int) -> None:
         self.set(velocity=velocity)
 
 
-class NoteList(MIDIEventList):
+class NoteList(MIDIEventList[Note]):
 
     _elements_class = Note
     _n_elements = "n_notes"
@@ -800,13 +842,12 @@ class TextSysexInfo(MIDIEventInfo):
 
 
 class TextSysex(MIDIEvent):
-
     """Abstract class for Text or Sysex events."""
 
     _del_func_name = 'MIDI_DeleteTextSysexEvt'
 
     @property
-    def infos(self):
+    def infos(self) -> TextSysexInfo:
         """
         Event info as dict.
 
@@ -822,7 +863,8 @@ class TextSysex(MIDIEvent):
         take = self.parent
         max_eventbuf_length = 65000
         _, _, _, sel, muted, ppqpos, type_, msg, _ = RPR.MIDI_GetTextSysexEvt(
-            take.id, self.index, 0, 0, 0.0, 0, '', max_eventbuf_length)
+            take.id, self.index, 0, 0, 0.0, 0, '', max_eventbuf_length
+        )
         return TextSysexInfo(
             selected=bool(sel),
             muted=bool(muted),
@@ -833,9 +875,17 @@ class TextSysex(MIDIEvent):
         )
 
     @reapy.inside_reaper()
-    def set(self, selected=None,
-            muted=None, position=None, sort=True,
-            raw_message=None, type_=None, *, time_unit="seconds"):
+    def set(
+        self,
+        selected: ty.Optional[bool] = None,
+        muted: ty.Optional[bool] = None,
+        position: ty.Optional[float] = None,
+        sort: ty.Optional[bool] = True,
+        raw_message: ty.Optional[ty.List[int]] = None,
+        type_: ty.Optional[int] = None,
+        *,
+        time_unit: str = "seconds"
+    ) -> None:
         """
         Set properties of event if needed.
 
@@ -872,7 +922,7 @@ class TextSysex(MIDIEvent):
         take = self.parent
         print('called')
         if position:
-            position = take._resolve_midi_unit((position,), time_unit)[0]
+            position = take._resolve_midi_unit((position, ), time_unit)[0]
         if raw_message:
             raw_message = take._midi_to_bytestr(raw_message)
             print(raw_message, len(raw_message))
@@ -882,7 +932,7 @@ class TextSysex(MIDIEvent):
         )
 
     @property
-    def type_(self):
+    def type_(self) -> int:
         """
         Meta event type
 
@@ -891,14 +941,14 @@ class TextSysex(MIDIEvent):
             1-14:MIDI text event types,
             15=REAPER notation event.
         """
-        return self.infos['_type_']
+        return self.infos['type_']
 
     @type_.setter
-    def type_(self, type_):
+    def type_(self, type_: int) -> None:
         self.set(type_=type_)
 
 
-class TextSysexList(MIDIEventList):
+class TextSysexList(MIDIEventList[TextSysex]):
 
     _elements_class = TextSysex
     _n_elements = "n_text_sysex"

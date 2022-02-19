@@ -21,7 +21,7 @@ except ImportError:
 from reapy.tools.network import Server
 
 
-def run_main_loop():
+def run_main_loop() -> None:
     # Get new connections
     SERVER.accept()
     # Process API call requests
@@ -32,9 +32,9 @@ def run_main_loop():
     reapy.defer(run_main_loop)
 
 
-def get_new_reapy_server():
+def get_new_reapy_server() -> Server:
     server_port = reapy.config.REAPY_SERVER_PORT
-    reapy.set_ext_state("reapy", "server_port", server_port)
+    reapy.set_ext_state("reapy", "server_port", str(server_port))
     server = Server(server_port)
     return server
 

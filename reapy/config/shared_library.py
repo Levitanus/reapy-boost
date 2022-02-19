@@ -28,9 +28,11 @@ Below are the original copyright and license:
 """
 
 import ctypes.util
+import ctypes
 import os
 import sys
 import sysconfig
+from typing import Generator, List, Optional, Union, cast
 
 
 __all__ = [
@@ -48,7 +50,7 @@ class _Dl_info(ctypes.Structure):
     ]
 
 
-def get_candidate_names():
+def get_candidate_names() -> Generator[str, None, None]:
     """Yield candidate file names for shared lib."""
     suffix = get_sharedlib_suffix()
     LDLIBRARY = sysconfig.get_config_var("LDLIBRARY")
@@ -78,13 +80,15 @@ def get_candidate_names():
         yield dlprefix + stem + suffix
 
 
-def get_candidate_paths():
+def get_candidate_paths() -> Generator[str, None, None]:
     """Yield candidate paths to shared lib."""
-    yield get_linked_libpython()
+    if pyth := get_linked_libpython():
+        yield pyth
 
     # List candidates for directories in which libpython may exist
     config_vars = "LIBPL", "srcdir", "LIBDIR"
-    lib_dirs = list(map(sysconfig.get_config_var, config_vars))
+    lib_dirs: List[Union[str, None]] = list(
+        map(sysconfig.get_config_var, config_vars))
 
     if is_windows():
         lib_dirs.append(os.path.join(os.path.dirname(sys.executable)))
@@ -103,14 +107,17 @@ def get_candidate_paths():
 
     for directory in filter(bool, lib_dirs):
         for basename in lib_basenames:
-            yield os.path.join(directory, basename)
+            yield os.path.join(cast(str, directory), basename)
 
     # In macOS and Windows, ctypes.util.find_library returns a full path:
     for basename in lib_basenames:
-        yield ctypes.util.find_library(get_library_name(basename))
+        lib = ctypes.util.find_library(get_library_name(basename))
+        if not lib:
+            raise RuntimeError('cannot find Python library')
+        yield lib
 
 
-def get_library_name(name):
+def get_library_name(name: str) -> str:
     """Convert file name to library name (no "lib" and ".so" etc.)."""
     suffix = get_sharedlib_suffix()
     if not is_windows() and name.startswith("lib"):
@@ -120,7 +127,7 @@ def get_library_name(name):
     return name
 
 
-def get_linked_libpython():
+def get_linked_libpython() -> Optional[str]:
     """Return linked libpython using dladdr (in *nix).
 
     Return ``None`` if libpython is statically linked.
@@ -143,7 +150,7 @@ def get_linked_libpython():
     return path
 
 
-def get_python_shared_library():
+def get_python_shared_library() -> str:
     """Return path to Python shared library (.dll, .dylib or .so).
 
     Returns
@@ -159,13 +166,13 @@ def get_python_shared_library():
     for path in filter(is_valid, get_candidate_paths()):
         return path
     raise FileNotFoundError(
-        "Could not find Python shared library. Please report this bug at "
-        "https://github.com/RomeoDespres/reapy/issues/new so that we can "
+        "Could not find Python shared library. Please report this bug at " +
+        "https://github.com/RomeoDespres/reapy/issues/new so that we can " +
         "support more cases."
     )
 
 
-def get_sharedlib_suffix():
+def get_sharedlib_suffix() -> str:
     """Return shared library suffix (.dll, .dylib or .so)."""
     suffix = sysconfig.get_config_var("SHLIB_SUFFIX")
     if suffix is None:
@@ -180,12 +187,12 @@ def get_sharedlib_suffix():
     return suffix
 
 
-def is_apple():
+def is_apple() -> bool:
     """Return whether OS is MacOS or OSX."""
     return sys.platform == "darwin"
 
 
-def is_valid(path):
+def is_valid(path: str) -> bool:
     """Return whether path is a valid library path."""
     return (
         bool(path)
@@ -195,6 +202,6 @@ def is_valid(path):
     )
 
 
-def is_windows():
+def is_windows() -> bool:
     """Return whether OS is Windows."""
     return os.name == "nt"

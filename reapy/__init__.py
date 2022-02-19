@@ -1,7 +1,7 @@
 import sys
 
 
-def is_inside_reaper():
+def is_inside_reaper() -> bool:
     """
     Return whether ``reapy`` is imported from inside REAPER.
 
@@ -22,28 +22,36 @@ def is_inside_reaper():
 
 
 from .tools import (
-    connect, connect_to_default_machine, dist_api_is_enabled, inside_reaper,
-    reconnect
+    connect,
+    connect_to_default_machine,
+    dist_api_is_enabled,
+    inside_reaper,
+    reconnect,
+    generate_imgui,
 )
-from . import reascript_api
+from . import reascript_api, errors, ImGui
 from .config import configure_reaper
 from .core import *
 from .core.reaper import *
 
 __version__ = "0.10.0"
-
 __all__ = [
-    "is_inside_reaper",
-    "connect",
-    "connect_to_default_machine",
-    "dist_api_is_enabled",
-    "inside_reaper",
-    "reconnect",
     "reascript_api",
+    "JS",
+    "ImGui",
+    "errors",
+    # config
     "configure_reaper",
     # core.reapy_object
     "ReapyObject",
     "ReapyObjectList",
+    # core.project
+    "Marker",
+    "Project",
+    "Region",
+    "TimeSelection",
+    "MarkerInfo",
+    "RegionInfo",
     # core.audio_accessor
     "AudioAccessor",
     # core.envelope
@@ -74,15 +82,6 @@ __all__ = [
     'NoteInfo',
     "Source",
     "Take",
-    # core.map
-    "map",
-    # core.project
-    "Marker",
-    "MarkerInfo",
-    "Project",
-    "Region",
-    "RegionInfo",
-    "TimeSelection",
     # core.track
     "AutomationItem",
     "Send",
@@ -92,15 +91,12 @@ __all__ = [
     "MIDIEditor",
     "ToolTip",
     "Window",
-    # JS_API
-    "JS",
     # core.reaper
     'add_reascript',
     'arm_command',
     'browse_for_file',
     'clear_console',
     'clear_peak_cache',
-    'close_project_tab',
     'dB_to_slider',
     'delete_ext_state',
     'disarm_command',
@@ -118,7 +114,7 @@ __all__ = [
     'get_resource_path',
     'get_user_inputs',
     'has_ext_state',
-    'new_project_tab',
+    'is_valid_id',
     'open_project',
     'perform_action',
     'prevent_ui_refresh',
@@ -137,10 +133,16 @@ __all__ = [
     'update_arrange',
     'update_timeline',
     'view_prefs',
-    'validate_id',
     'audio',
     'midi',
     'ui',
     'defer',
     'at_exit',
+    # tools
+    'connect',
+    'connect_to_default_machine',
+    'dist_api_is_enabled',
+    'inside_reaper',
+    'reconnect',
+    'generate_imgui',
 ]

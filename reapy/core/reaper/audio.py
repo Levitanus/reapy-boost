@@ -1,10 +1,12 @@
 """Audio handling functions."""
 
+from enum import Enum
+from typing import List, Tuple
 import reapy
 import reapy.reascript_api as RPR
 
 
-def get_input_latency(unit="second"):
+def get_input_latency(unit: str = "second") -> float:
     """
     Return input latency.
 
@@ -19,15 +21,15 @@ def get_input_latency(unit="second"):
     latency : float
         Input latency.
     """
-    latency, out_latency = RPR.GetInputOutputLatency(0, 0)
+    latency, out_latency = RPR.GetInputOutputLatency(0, 0)  # type:ignore
     if unit == "second":
         # Small hack because RPR.GetInputLatency doesn't exist...
-        latency *= RPR.GetOutputLatency()/out_latency
+        latency *= RPR.GetOutputLatency() / out_latency  # type:ignore
     return latency
 
 
 @reapy.inside_reaper()
-def get_input_names():
+def get_input_names() -> Tuple[str, ...]:
     """
     Return names of all input channels.
 
@@ -37,10 +39,12 @@ def get_input_names():
         Names of input channels.
     """
     n_channels = reapy.audio.get_n_inputs()
-    return tuple(map(RPR.GetInputChannelName, range(n_channels)))
+    return tuple(map(
+        RPR.GetInputChannelName,  # type:ignore
+        range(n_channels)))
 
 
-def get_n_inputs():
+def get_n_inputs() -> int:
     """
     Return number of audio inputs.
 
@@ -49,11 +53,11 @@ def get_n_inputs():
     n_inputs : int
         Number of audio inputs.
     """
-    n_inputs = RPR.GetNumAudioInputs()
+    n_inputs = RPR.GetNumAudioInputs()  # type:ignore
     return n_inputs
 
 
-def get_n_outputs():
+def get_n_outputs() -> int:
     """
     Return number of audio outputs.
 
@@ -62,11 +66,11 @@ def get_n_outputs():
     n_outputs : int
         Number of audio outputs.
     """
-    n_outputs = RPR.GetNumAudioOutputs()
+    n_outputs = RPR.GetNumAudioOutputs()  # type:ignore
     return n_outputs
 
 
-def get_output_latency(unit="second"):
+def get_output_latency(unit: str = "second") -> float:
     """
     Return output latency.
 
@@ -81,16 +85,16 @@ def get_output_latency(unit="second"):
     latency : float
         Output latency.
     """
-    latency, out_latency = RPR.GetInputOutputLatency(0, 0)
+    latency, out_latency = RPR.GetInputOutputLatency(0, 0)  # type:ignore
     if unit == "second":
-        latency = RPR.GetOutputLatency()
+        latency = RPR.GetOutputLatency()  # type:ignore
     else:
-        latency = RPR.GetInputOutputLatency(0, 0)[1]
+        latency = RPR.GetInputOutputLatency(0, 0)[1]  # type:ignore
     return latency
 
 
 @reapy.inside_reaper()
-def get_output_names():
+def get_output_names() -> Tuple[str, ...]:
     """
     Return names of all output channels.
 
@@ -100,17 +104,20 @@ def get_output_names():
         Names of output channels.
     """
     n_channels = reapy.audio.get_n_outputs()
-    return tuple(map(RPR.GetOutputChannelName, range(n_channels)))
+    return tuple(
+        map(
+            RPR.GetOutputChannelName,  # type:ignore
+            range(n_channels)))
 
 
-def init():
+def init() -> None:
     """
     Open all audio and MIDI devices (if not opened).
     """
-    RPR.Audio_Init()
+    RPR.Audio_Init()  # type:ignore
 
 
-def is_prebuffer():
+def is_prebuffer() -> bool:
     """
     Return whether audio is in pre-buffer (threadsafe).
 
@@ -119,11 +126,11 @@ def is_prebuffer():
     is_prebuffer : bool
         Whether audio is in pre-buffer.
     """
-    is_prebuffer = bool(RPR.Audio_IsPreBuffer())
+    is_prebuffer = bool(RPR.Audio_IsPreBuffer())  # type:ignore
     return is_prebuffer
 
 
-def is_running():
+def is_running() -> bool:
     """
     Return whether audio is running (threadsafe).
 
@@ -132,12 +139,12 @@ def is_running():
     is_running : bool
         Whether audio is running.
     """
-    is_running = bool(RPR.Audio_IsRunning())
+    is_running = bool(RPR.Audio_IsRunning())  # type:ignore
     return is_running
 
 
-def quit():
+def quit() -> None:
     """
     Close all audio and MIDI devices (if opened).
     """
-    RPR.Audio_Quit()
+    RPR.Audio_Quit()  # type:ignore

@@ -5,13 +5,19 @@ import inspect
 import json
 import operator
 import sys
+import typing as ty
+import types
+if ty.TYPE_CHECKING:
+    import reapy
+
+T1 = ty.TypeVar('T1')
 
 
-class ClassCache(dict):
+class ClassCache(ty.Dict[str, T1]):
 
-    _core = None
+    _core: ty.Optional[types.ModuleType] = None
 
-    def __missing__(self, key):
+    def __missing__(self, key: str) -> T1:
         if self._core is None:
             # The import is here because otherwise there is an import loop
             # and to perform import just once.
@@ -20,19 +26,16 @@ class ClassCache(dict):
         return self[key]
 
 
-_CLASS_CACHE = ClassCache()
+_CLASS_CACHE: ClassCache[ty.Type['reapy.ReapyObject']] = ClassCache()
 
 
 class ReapyEncoder(json.JSONEncoder):
 
-    def default(self, x):
+    def default(self, x: ty.Any) -> ty.Any:
         if hasattr(x, '_to_dict'):
             return x._to_dict()
         elif inspect.ismethod(x):
-            return {
-                "__self__": x.__self__,
-                "__method_name__": x.__name__
-            }
+            return {"__self__": x.__self__, "__method_name__": x.__name__}
         elif callable(x):
             return {
                 "__callable__": True,
@@ -44,15 +47,15 @@ class ReapyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, x)
 
 
-def loads(s):
+def loads(s: ty.Union[ty.Text, bytes]) -> ty.Any:
     return json.loads(s, object_hook=object_hook)
 
 
-def dumps(x):
+def dumps(x: ty.Any) -> str:
     return json.dumps(x, cls=ReapyEncoder)
 
 
-def object_hook(x):
+def object_hook(x: ty.Any) -> ty.Any:
     if "__reapy__" in x:
         reapy_class = _CLASS_CACHE[x["class"]]
         return reapy_class(*x["args"], **x["kwargs"])

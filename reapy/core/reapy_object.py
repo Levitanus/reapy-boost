@@ -1,24 +1,36 @@
+from typing import Any, Dict, Tuple, Type, TypedDict
 import reapy
 import reapy.reascript_api as RPR
+
+ReapyObjectDict = TypedDict(
+    'ReapyObjectDict', {
+        "__reapy__": bool,
+        "class": str,
+        "args": Tuple[Any, ...],
+        "kwargs": Dict[str, Any]
+    }
+)
 
 
 class ReapyMetaclass(type):
 
     @property
-    def _reapy_parent(self):
+    def _reapy_parent(self) -> Type['ReapyObject']:
         """Return first reapy parent class."""
         for candidate in self.__mro__:
             if candidate.__module__.startswith('reapy.'):
                 return candidate
+        raise TypeError(f'cannot find reapy class in {self.__mro__}')
 
 
 class ReapyObject(metaclass=ReapyMetaclass):
     """Base class for reapy objects."""
+    id: str
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return repr(self) == repr(other)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
 
         def to_str(x):
             if isinstance(x, str):
@@ -37,24 +49,24 @@ class ReapyObject(metaclass=ReapyMetaclass):
         return rep
 
     @property
-    def _args(self):
+    def _args(self) -> Tuple[()]:
         return ()
 
-    def _get_pointer_and_name(self):
+    def _get_pointer_and_name(self) -> Tuple[int, str]:
         name, pointer = self.id.split(')')
         return int(pointer, base=16), name[1:]
 
     @property
-    def _is_defined(self):
+    def _is_defined(self) -> bool:
         if hasattr(self, "id"):
             return not self.id.endswith("0x0000000000000000")
         raise NotImplementedError
 
     @property
-    def _kwargs(self):
+    def _kwargs(self) -> Dict[str, object]:
         return {}
 
-    def _to_dict(self):
+    def _to_dict(self) -> ReapyObjectDict:
         return {
             "__reapy__": True,
             "class": self.__class__._reapy_parent.__name__,

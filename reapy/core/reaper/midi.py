@@ -1,8 +1,9 @@
 import reapy
 import reapy.reascript_api as RPR
+import typing as ty
 
 
-def get_active_editor():
+def get_active_editor() -> ty.Optional[reapy.MIDIEditor]:
     """
     Return active MIDI editor, or None if no editor is active.
 
@@ -11,14 +12,14 @@ def get_active_editor():
     editor : MIDIEditor or None
         Active MIDI editor, or None if no editor is active.
     """
-    editor = reapy.MIDIEditor(RPR.MIDIEditor_GetActive())
+    editor = reapy.MIDIEditor(RPR.MIDIEditor_GetActive())  # type:ignore
     if not editor._is_defined:
         editor = None
     return editor
 
 
 @reapy.inside_reaper()
-def get_input_names():
+def get_input_names() -> ty.List[str]:
     """
     Return names of all input channels.
 
@@ -28,10 +29,13 @@ def get_input_names():
         Names of input channels.
     """
     n_channels = reapy.midi.get_n_inputs()
-    return [RPR.GetMIDIInputName(i, "", 2048)[2] for i in range(n_channels)]
+    return [
+        RPR.GetMIDIInputName(  # type:ignore
+            i, "", 2048)[2] for i in range(n_channels)
+    ]
 
 
-def get_max_inputs():
+def get_max_inputs() -> int:
     """
     Return maximum number of MIDI inputs.
 
@@ -40,11 +44,11 @@ def get_max_inputs():
     max_inputs : int
         Maximum number of MIDI inputs.
     """
-    max_inputs = RPR.GetMaxMidiInputs()
+    max_inputs = RPR.GetMaxMidiInputs()  # type:ignore
     return max_inputs
 
 
-def get_max_outputs():
+def get_max_outputs() -> int:
     """
     Return maximum number of MIDI outputs.
 
@@ -53,11 +57,11 @@ def get_max_outputs():
     max_outputs : int
         Maximum number of MIDI outputs.
     """
-    max_outputs = RPR.GetMaxMidiOutputs()
+    max_outputs = RPR.GetMaxMidiOutputs()  # type:ignore
     return max_outputs
 
 
-def get_n_inputs():
+def get_n_inputs() -> int:
     """
     Return number of MIDI inputs.
 
@@ -66,11 +70,11 @@ def get_n_inputs():
     n_inputs : int
         Number of MIDI inputs.
     """
-    n_inputs = RPR.GetNumMIDIInputs()
+    n_inputs = RPR.GetNumMIDIInputs()  # type:ignore
     return n_inputs
 
 
-def get_n_outputs():
+def get_n_outputs() -> int:
     """
     Return number of MIDI outputs.
 
@@ -79,12 +83,12 @@ def get_n_outputs():
     n_outputs : int
         Number of MIDI outputs.
     """
-    n_outputs = RPR.GetNumMIDIOutputs()
+    n_outputs = RPR.GetNumMIDIOutputs()  # type:ignore
     return n_outputs
 
 
 @reapy.inside_reaper()
-def get_output_names():
+def get_output_names() -> ty.List[str]:
     """
     Return names of all output channels.
 
@@ -94,9 +98,12 @@ def get_output_names():
         Names of output channels.
     """
     n_channels = reapy.midi.get_n_outputs()
-    return [RPR.GetMIDIOutputName(i, "", 2048)[2] for i in range(n_channels)]
+    return [
+        RPR.GetMIDIOutputName(  # type:ignore
+            i, "", 2048)[2] for i in range(n_channels)
+    ]
 
 
-def reinit():
+def reinit() -> None:
     """Reset all MIDI devices."""
-    RPR.midi_reinit()
+    RPR.midi_reinit()  # type:ignore
