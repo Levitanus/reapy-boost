@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
     * `MIDIEvent.set` method now works in every subclass
     * signature of `MIDIEvent.set` slightly changed for not breaking Libskov-substitution principle. Take our apologize for that.
     * `MIDIEvent.set` now has True-optional args.
+- FX.functions now initialized on `FX.__init__` to be able for using in case of script launch before Reaper starts.
 
 ### Fixed
 

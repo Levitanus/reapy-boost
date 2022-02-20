@@ -11,14 +11,19 @@ class FX(ReapyObject):
     """FX on a Track or a Take."""
 
     _class_name = "FX"
-    functions = {
-        prefix: {
-            name.replace(prefix, ""): function
-            for name, function in RPR.__dict__.items()
-            if name.startswith(prefix)
+
+    _functions: Dict[str, Dict[str, Callable[..., Any]]] = {}
+
+    @staticmethod
+    def _get_cls_functions() -> Dict[str, Dict[str, Callable[..., Any]]]:
+        return {
+            prefix: {
+                name.replace(prefix, ""): function
+                for name, function in RPR.__dict__.items()
+                if name.startswith(prefix)
+            }
+            for prefix in ("TrackFX_", "TakeFX_")
         }
-        for prefix in ("TrackFX_", "TakeFX_")
-    }
 
     def __init__(
         self,
@@ -35,11 +40,21 @@ class FX(ReapyObject):
         self.functions = self._get_functions()
 
     def _get_functions(self) -> Dict[str, Callable[..., Any]]:
+        cls = self.__class__
+        if not cls._functions:
+            cls._functions = self._get_cls_functions()
         if isinstance(self.parent, reapy_boost.Track):
-            type = "TrackFX_"
+            type_ = "TrackFX_"
         else:
-            type = "TakeFX_"
-        return self.functions[type]
+            type_ = "TakeFX_"
+        return cls._functions[type_]
+
+    # def _get_functions(self) -> Dict[str, Callable[..., Any]]:
+    #     if isinstance(self.parent, reapy_boost.Track):
+    #         type = "TrackFX_"
+    #     else:
+    #         type = "TakeFX_"
+    #     return self.functions[type]
 
     @property
     def _kwargs(self) -> Dict[str, Union[str, int]]:
