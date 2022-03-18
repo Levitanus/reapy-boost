@@ -37,7 +37,7 @@ $ pip install reapy-boost
 One additional step is required to let REAPER know reapy is available. First, open REAPER. Then in a terminal, run:
 
 ```bash
-$ python -c "import reapy_boost; reapy.configure_reaper()"
+$ python -c "import reapy_boost; reapy_boost.configure_reaper()"
 ```
 
 Restart REAPER, and you're all set! You can now import `reapy` from inside or outside REAPER as any standard Python module.
@@ -53,7 +53,7 @@ you can open your usual Python shell and type:
 
 ```python
 >>> import reapy_boost
->>> reapy.print("Hello world!")
+>>> reapy_boost.print("Hello world!")
 ```
 
 ## Usage
