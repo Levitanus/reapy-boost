@@ -8,6 +8,95 @@ This fork started as local copy for working on the repository as contributor. Bu
 
 So, I'll try to keep the fork as consistent as possible with the original repository, but while @RomeoDespres adds some own API which conflicts with API of the fork — they are going aside.
 
+A few major features included in boost now:
+
+- `ExtState` class, that can be used as property, or state of GUI widgets and be statically type-checked:
+
+```Python
+>>> state = reapy_boost.ExtState("my section", "my value", 5)
+... print(state.value)
+5
+... state.value = 3
+... print(state.value)
+3
+... del state.value
+... print(state.value)
+None
+```
+
+- JulianSader `JS_API` integrated in Python! All the recent functions are automatically generated from the GitHub source and availble in the `reapy_boost.JS` module. They are also statically type-checked and some broken bindings are fixed manually.
+
+- cliffon `ReaImGui` extension is also wrapped in statically typed module and can be used directly from the module `reapy_boost.ImGui`. But I hope to introduce a pythonic gui system, based on theese extension, but without leaking abstractions, so later we can have several back-ends for it. For now it is just a sketch, that works only inside `REAPER` and will be changed before the final release. But even now it look quite better that «pure» `ImGui` example:
+
+```Python
+from typing import Dict, Generator, Set
+import reapy_boost as rpr
+from reapy_boost import gui
+from sample_editor.project import RenderedTracks
+
+
+
+class TrackList(gui.Table):
+
+    def len(self) -> int:
+        return rpr.Project().n_tracks
+
+    def make_rows(self, min_row: int,
+                  max_row: int) -> Generator[gui.TableRow, None, None]:
+        project = rpr.Project()
+        rendered_tracks: rpr.ExtState[Set[str]] = rpr.ExtState(
+            "levitanus sample_editor",
+            "rendered tracks",
+            None,
+            project=project)
+        tracks = project.tracks
+
+        def on_click(track: rpr.Track, value: bool) -> None:
+            _tracks = rendered_tracks.value
+            if _tracks is None:
+                _tracks = []
+            else:
+                _tracks = [rpr.Track.from_GUID(guid) for guid in value]
+            if value:
+                _tracks.append(track)
+            else:
+                _tracks.remove(track)
+            rendered_tracks.value = set(track.GUID for track in _tracks)
+
+        for row in range(min_row, max_row):
+            if row >= project.n_tracks:
+                break
+            track = tracks[row]
+            is_rendered = track in rendered_tracks.tracks
+            yield gui.TableRow({
+                "#": str(row),
+                "name": track.name,
+                "is_rendered": gui.CheckBox("")\
+                    .set_click(lambda value: on_click(track, value))\
+                    .set_value(is_rendered),
+            })
+
+
+dock_button = gui.CheckBox("dock")
+
+content = gui.Content(
+    dock_button,
+    gui.Button("greet")\
+        .set_click(lambda: rpr.print('hello'))\
+        .width(100),
+    gui.Row(
+        gui.Text("my text"), gui.Button("new"), spacing=100
+    ),
+    TrackList("rendered tracks")
+)
+
+root = gui.Window(name="sample editor", content=content)
+dock_button.state = root.docked
+
+root.run()
+
+```
+
 ## feel free to contribute!
 
 So, the baseline and base principle of the fork is to be «boosted»: review PRs as fast as possible, and, if they makes what they declare — just put them into the project. It may produce not very consistent codebase and not so clean architecture, but it will produce a stable API that can be used in the projects of contributors.
