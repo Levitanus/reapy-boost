@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Type, TypedDict
+from typing import Any, Dict, Iterator, Tuple, Type, TypedDict
 import reapy_boost
 import reapy_boost.reascript_api as RPR
 
@@ -78,4 +78,6 @@ class ReapyObject(metaclass=ReapyMetaclass):
 class ReapyObjectList(ReapyObject):
     """Abstract class for list of ReapyObjects."""
 
-    pass
+    def __iter__(self) -> Iterator[ReapyObject]:
+        for i in range(len(self)):
+            yield self[i]
