@@ -716,7 +716,7 @@ class Track(ReapyObject):
         RPR.GetSetMediaTrackInfo_String(  # type:ignore
             self.id, param_name, param_string, True)
 
-    def set_info_value(self, param_name: str, param_value: str) -> None:
+    def set_info_value(self, param_name: str, param_value: float) -> None:
         RPR.SetMediaTrackInfo_Value(  # type:ignore
             self.id, param_name, param_value)
 

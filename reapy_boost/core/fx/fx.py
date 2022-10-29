@@ -1,6 +1,6 @@
 """Define FX and FXParam classes."""
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast, overload
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast, overload
 import reapy_boost
 from reapy_boost import reascript_api as RPR
 from reapy_boost.core import ReapyObject, ReapyObjectList
@@ -441,6 +441,9 @@ class FXList(ReapyObjectList):
 
     def __len__(self) -> int:
         return self.parent.n_fxs
+
+    def __iter__(self) -> Iterator[FX]:
+        return super().__iter__()
 
     @reapy_boost.inside_reaper()
     def _get_items_from_slice(self, slice: slice) -> List['FX']:

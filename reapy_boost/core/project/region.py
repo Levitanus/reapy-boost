@@ -36,6 +36,7 @@ class Region(ReapyObject):
             )
             assert parent_project is not None, message
             parent_project_id = parent_project.id
+        self.enum_index = enum_index
         self.project = reapy_boost.Project(parent_project_id)
         self.project_id = parent_project_id
         if index is None:
