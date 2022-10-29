@@ -27,9 +27,11 @@ All notable changes to this project will be documented in this file.
 - `MIDIEvent` and subclasses extended with:
     * `as_dict -> List[MIDIEventDict]` property
 - `CC` class extended with `shape -> CCShape` property
+- Introduced class `ExtState`. It generalizes usage of external state: it can be used as gui state or some sort of property, being statically type checked and easily erased during debug.
 
 ### Improved
 
+- `set_ext_state` and `get_ext_state` now supports pickling as well as it was in the `Project()`
 - `MIDIEvent` and subclasses:
     * all properties now read-write
     * `MIDIEvent.set` method now works in every subclass

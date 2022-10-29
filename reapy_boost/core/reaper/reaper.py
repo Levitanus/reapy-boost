@@ -1,5 +1,7 @@
+import codecs
+import pickle
 from types import TracebackType
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
 import reapy_boost
 import reapy_boost.reascript_api as RPR
 import contextlib
@@ -14,8 +16,7 @@ _ORIGINAL_PRINT = print
 
 
 def add_project_tab(
-    make_current_project: bool = True
-) -> 'reapy_boost.Project':
+        make_current_project: bool = True) -> 'reapy_boost.Project':
     """Open new project tab and return it.
 
     Parameters
@@ -231,7 +232,9 @@ def get_exe_dir() -> str:
     return path
 
 
-def get_ext_state(section: str, key: str) -> str:
+def get_ext_state(section: str,
+                  key: str,
+                  pickled: bool = False) -> Union[str, object]:
     """
     Get the extended state value for a specific section and key.
 
@@ -241,6 +244,8 @@ def get_ext_state(section: str, key: str) -> str:
         Extended state section.
     key : str
         Extended state key for section `section`.
+    pickled: bool
+        Whether data was pickled or not.
 
     Returns
     -------
@@ -253,6 +258,8 @@ def get_ext_state(section: str, key: str) -> str:
     set_ext_state
     """
     value = RPR.GetExtState(section, key)  # type:ignore
+    if value and pickled:
+        value = pickle.loads(codecs.decode(value.encode(), "base64"))
     return value
 
 
@@ -434,11 +441,9 @@ def is_valid_id(id_: str) -> bool:
 
 
 @reapy_boost.inside_reaper()
-def open_project(
-    filepath: str,
-    in_new_tab: bool = False,
-    make_current_project: bool = True
-) -> 'reapy_boost.Project':
+def open_project(filepath: str,
+                 in_new_tab: bool = False,
+                 make_current_project: bool = True) -> 'reapy_boost.Project':
     """
     Open project and return it.
 
@@ -496,9 +501,8 @@ class prevent_ui_refresh(contextlib.ContextDecorator):
     def __enter__(self) -> None:
         RPR.PreventUIRefresh(1)  # type:ignore
 
-    def __exit__(
-        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
-    ) -> None:
+    def __exit__(self, exc_type: Exception, exc_val: str,
+                 exc_tb: TracebackType) -> None:
         RPR.PreventUIRefresh(-1)  # type:ignore
 
 
@@ -530,15 +534,14 @@ class reaprint(contextlib.ContextDecorator):
         self._original_stdouts.append(sys.stdout)
         sys.stdout = ReaperConsole()
 
-    def __exit__(
-        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
-    ) -> None:
+    def __exit__(self, exc_type: Exception, exc_val: str,
+                 exc_tb: TracebackType) -> None:
         sys.stdout = self._original_stdouts.pop()
 
 
-def remove_reascript(
-    path: str, section_id: int = 0, commit: bool = True
-) -> None:
+def remove_reascript(path: str,
+                     section_id: int = 0,
+                     commit: bool = True) -> None:
     """
     Remove a ReaScript.
 
@@ -598,9 +601,11 @@ def rgb_to_native(rgb: Tuple[int, int, int]) -> int:
     return native_color
 
 
-def set_ext_state(
-    section: str, key: str, value: str, persist: bool = False
-) -> None:
+def set_ext_state(section: str,
+                  key: str,
+                  value: Union[str, object],
+                  persist: bool = False,
+                  pickled: bool = False) -> None:
     """
     Set the extended state value for a specific section and key.
 
@@ -610,17 +615,37 @@ def set_ext_state(
         Extended state section.
     key : str
         Extended state key for section `section`.
-    value : str
-        Extended state value for section `section` and key `key`.
+    value : Union[Any, str]
+        State value. Will be dumped to str using `pickle` if
+        `pickled` is `True`. Length of the dumped value
+        must not be over 2**31 - 2.
     persist : bool
         Whether the value should be stored and reloaded the next time
         REAPER is opened.
+    pickled : bool, optional
+        Data will be pickled with the last version if True.
+        If you using mypy as type checker, typing_extensions.Literal[True]
+        has to be used for `pickled`.    
+        
+    Raises
+    ------
+    ValueError
+        If dumped `value` has length over 2**31 - 2.
 
     See also
     --------
     delete_ext_state
     get_ext_state
     """
+    if pickled:
+        value = pickle.dumps(value)
+        value = codecs.encode(value, "base64").decode()
+    if not isinstance(value, (str, bytes)):
+        raise TypeError("value has to be of type 'str', or should be picked")
+    if len(value) > 2**31 - 2:
+        message = ("Dumped value length is {:,d}. It must not be over "
+                   "2**31 - 2.")
+        raise ValueError(message.format(len(value)))
     RPR.SetExtState(section, key, value, persist)  # type:ignore
 
 
@@ -724,8 +749,7 @@ def show_message_box(text: str = "", title: str = "", type: str = "ok"):
         7: "no"
     }
     status = RPR.ShowMessageBox(  # type:ignore
-        text, title, all_types[type]
-    )
+        text, title, all_types[type])
     status = all_status[status]
     return status
 
@@ -786,9 +810,8 @@ class undo_block(contextlib.ContextDecorator):
     def __enter__(self) -> None:
         RPR.Undo_BeginBlock()  # type:ignore
 
-    def __exit__(
-        self, exc_type: Exception, exc_val: str, exc_tb: TracebackType
-    ) -> None:
+    def __exit__(self, exc_type: Exception, exc_val: str,
+                 exc_tb: TracebackType) -> None:
         RPR.Undo_EndBlock(self.undo_name, self.flags)  # type:ignore
 
 
@@ -811,3 +834,100 @@ def view_prefs() -> None:
     Open Preferences.
     """
     RPR.ViewPrefs(0, "")  # type:ignore
+
+
+T = TypeVar("T")
+
+
+class ExtState(Generic[T]):
+    """Generalized External state item.
+
+    Parameters
+    ----------
+    section : str
+    key : str
+    value : Optional[T]
+        any value, that can be pickled
+    persist : bool
+        If value should be saved between sessions.
+        Note, that it will delete value at initialization.
+    pickled : bool, optional
+        Wether value should be pickled.
+    project : Optional[reapy_boost.Project], optional
+        If specified, value will be stored in project file.
+        
+    Raises
+    ------
+    reapy_boost.errors.InvalidObjectError
+        if project is invalid object
+        
+    Usage
+    -----
+    >>> state = reapy_boost.ExtState("my section", "my value", 5)
+    ... print(state.value)  # 5
+    ... state.value = 3
+    ... print(state.value)  # 3
+    ... del state.value
+    ... print(state.value)  # None
+    """
+
+    def __init__(self,
+                 section: str,
+                 key: str,
+                 value: Optional[T],
+                 persist: bool = True,
+                 pickled: bool = True,
+                 project: Optional[reapy_boost.Project] = None) -> None:
+        self.section = section
+        self.key = key
+        self.persist = persist
+        self.pickled = pickled
+        self.project = project
+        if value is not None:
+            if persist and self.value is None:
+                self.value = value
+        if not persist:
+            del self.value
+
+    @property
+    def value(self) -> Optional[T]:
+        if self.project is None:
+            return self._value_from_reaper()
+        return self._value_from_project()
+
+    @value.setter
+    def value(self, value: T) -> None:
+        if self.project is None:
+            return self._value_to_reaper(value)
+        return self._value_to_project(value)
+
+    @value.deleter
+    def value(self) -> None:
+        if self.project is None:
+            delete_ext_state(self.section, self.key)
+            return
+        project = self._check_project()
+        project.set_ext_state(self.section, self.key, "", False)
+
+    def _value_to_reaper(self, value: T) -> None:
+        set_ext_state(self.section, self.key, value, self.persist, self.pickled)
+
+    def _value_to_project(self, value: T) -> None:
+        project = self._check_project()
+        project.set_ext_state(self.section, self.key, value, self.pickled)
+
+    def _value_from_reaper(self) -> Optional[T]:
+        if not has_ext_state(self.section, self.key):
+            return None
+        return get_ext_state(self.section, self.key,
+                             self.pickled)  # type:ignore
+
+    def _value_from_project(self) -> Optional[T]:
+        project = self._check_project()
+        value = project.get_ext_state(self.section, self.key, self.pickled)
+        return None if not value else value  # type:ignore
+
+    def _check_project(self) -> reapy_boost.Project:
+        if self.project is None or not self.project.has_valid_id:
+            raise reapy_boost.errors.InvalidObjectError(self.project)
+        return self.project

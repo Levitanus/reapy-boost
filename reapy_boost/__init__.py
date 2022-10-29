@@ -138,6 +138,7 @@ __all__ = [
     'ui',
     'defer',
     'at_exit',
+    'ExtState',
     # tools
     'connect',
     'connect_to_default_machine',
