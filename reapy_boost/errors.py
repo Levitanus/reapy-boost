@@ -9,8 +9,7 @@ class DisabledDistAPIError(Exception):
         message = (
             "Can't reach distant API. Please start REAPER, or call " +
             "reapy_boost.config.enable_dist_api() from inside REAPER to enable "
-            + "distant API."
-        )
+            + "distant API.")
         super().__init__(message)
 
 
@@ -20,8 +19,7 @@ class DisabledDistAPIWarning(Warning):
         message = (
             "Can't reach distant API. Please start REAPER, or call " +
             "reapy_boost.config.enable_dist_api() from inside REAPER to enable "
-            + "distant API."
-        )
+            + "distant API.")
         super().__init__(message)
 
 
@@ -37,18 +35,16 @@ class DistError(Exception):
     def __init__(self, tb_string: str) -> None:
         message = (
             "\n\nAn error occurred while running a function inside REAPER. " +
-            "Traceback was :\n\n{}"
-        ).format(tb_string)
+            "Traceback was :\n\n{}").format(tb_string)
         super().__init__(message)
 
 
 class ExtensionNotFoundError(Exception):
 
     def __init__(self, extension: str, url: str) -> None:
-        message = (
-            "Extension {} is required by this function " +
-            "but is not available. " + "Please download it from {}."
-        ).format(extension, url)
+        message = ("Extension {} is required by this function " +
+                   "but is not available. " +
+                   "Please download it from {}.").format(extension, url)
         super().__init__(message)
 
 
@@ -79,19 +75,19 @@ class InvalidObjectError(Exception):
 
     def __init__(self, object: object) -> None:
         self.object = object
-        message = (
-            "{} has an invalid ID. Common causes of this error " +
-            "are closing REAPER or deleting the object referred to " +
-            "by the aforementioned ID. Try checking for " +
-            "object.has_valid_id`."
-        )
+        message = ("{} has an invalid ID. Common causes of this error " +
+                   "are closing REAPER or deleting the object referred to " +
+                   "by the aforementioned ID. Try checking for " +
+                   "object.has_valid_id`.")
         super().__init__(message.format(object))
 
 
 class OutsideREAPERError(Exception):
 
-    def __init__(self) -> None:
-        message = "reapy_boost can not be enabled or disabled from outside REAPER"
+    def __init__(self, message: Optional[str] = None) -> None:
+        if not message:
+            message =\
+                "reapy_boost can not be enabled or disabled from outside REAPER"
         super().__init__(message)
 
 
@@ -104,10 +100,8 @@ class RedoError(Exception):
 
 class UndefinedEnvelopeError(Exception):
 
-    def __init__(
-        self, index: Optional[int], name: Optional[str],
-        chunk_name: Optional[str]
-    ) -> None:
+    def __init__(self, index: Optional[int], name: Optional[str],
+                 chunk_name: Optional[str]) -> None:
         if index is not None:
             message = "No envelope with index {}".format(index)
         elif name is not None:
