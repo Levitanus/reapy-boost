@@ -34,7 +34,7 @@ from .config import configure_reaper
 from .core import *
 from .core.reaper import *
 
-__version__ = "0.10.1"
+__version__ = "0.10.103"
 __all__ = [
     "reascript_api",
     "JS",
