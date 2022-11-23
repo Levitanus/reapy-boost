@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## V0.10.2
 
 ## Added
 
@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
     * `as_dict -> List[MIDIEventDict]` property
 - `CC` class extended with `shape -> CCShape` property
 - Introduced class `ExtState`. It generalizes usage of external state: it can be used as gui state or some sort of property, being statically type checked and easily erased during debug.
+- Changed API for connection to distant machines. Introduced `Host` class, `LOCALHOST` constant ip address and made method `add_web_interface` public.
 
 ### Improved
 

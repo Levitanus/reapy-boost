@@ -1,14 +1,37 @@
 import importlib
 import sys
 import warnings
+from ipaddress import IPv4Address
+import typing as ty
 
 import reapy_boost
 import reapy_boost.config
 from reapy_boost import errors
 from . import client, web_interface
+from .client import LOCALHOST
 
-CLIENT = None
-CLIENTS = {None: None}
+_CLIENTS_TYPE = ty.Dict['Host', client.Client]
+
+CLIENT: ty.Optional[client.Client] = None
+CLIENTS: ty.Optional[_CLIENTS_TYPE] = None
+
+
+class Host:
+
+    def __init__(
+        self,
+        host: IPv4Address,
+        port: int = reapy_boost.config.WEB_INTERFACE_PORT,
+    ):
+        self.port, self.host = port, host
+
+    def __eq__(self, other):
+        if not isinstance(other, Host):
+            return False
+        return self.port, self.host == other.port, other.host
+
+    def __hash__(self) -> int:
+        return self.host.__hash__() + self.port
 
 
 def get_selected_client():
@@ -55,7 +78,7 @@ def reconnect():
         if host is None:
             # We are outside REAPER, so this means initial import failed to
             # connect and we want to retry with default host (i.e. localhost)
-            host = "localhost"
+            host = LOCALHOST
         try:
             del CLIENTS[host]
         except KeyError:
@@ -72,7 +95,7 @@ class connect:
 
     Parameters
     ----------
-    host : str, optional
+    host : str, optionalal
         Slave machine host. If None, selects default ``reapy_boost``
         behavior (i.e. local REAPER instance).
 
@@ -82,19 +105,21 @@ class connect:
         Connect to default slave machine (i.e. local REAPER instance).
     """
 
-    def __init__(self, host=None):
+    def __init__(self, host: ty.Optional[Host]):
         global CLIENT
         self.previous_client = CLIENT
+        global CLIENTS
+        CLIENTS = CLIENTS or {}
         try:
+            host = host or Host(IPv4Address(LOCALHOST))
             if host not in CLIENTS:
                 register_machine(host)
             CLIENT = CLIENTS[host]
-            if hasattr(
-                reapy_boost, 'reascript_api'
-            ):  # False during initial import
+            if hasattr(reapy_boost,
+                       'reascript_api'):  # False during initial import
                 importlib.reload(reapy_boost.reascript_api)
         except errors.DisabledDistAPIError as e:
-            if host and host != 'localhost':
+            if host and host != Host(IPv4Address(LOCALHOST)):
                 raise e
             warnings.warn(errors.DisabledDistAPIWarning())
 
@@ -114,26 +139,34 @@ class connect_to_default_machine(connect):
         super().__init__()
 
 
-def register_machine(host):
+def register_machine(host: Host):
     """Register a slave machine.
 
     Parameters
     ----------
     host : str
-        Slave machine host (e.g. ``"localhost"``).
+        Slave machine host (e.g. ``LOCALHOST``).
 
     See also
     --------
     ``reapy_boost.connect``
     """
-    if reapy_boost.is_inside_reaper() and host == "localhost":
+    if reapy_boost.is_inside_reaper() and host == LOCALHOST:
         msg = "A REAPER instance can not connect to istelf."
         raise errors.InsideREAPERError(msg)
-    interface_port = reapy_boost.config.WEB_INTERFACE_PORT
-    interface = web_interface.WebInterface(interface_port, host)
-    CLIENTS[host] = client.Client(interface.get_reapy_server_port(), host)
+    if isinstance(host, str):
+        # for the case someone still uses string address.
+        host = Host(IPv4Address(host))
+    interface_port = host.port
+    interface = web_interface.WebInterface(interface_port, str(host.host))
+    global CLIENTS
+    CLIENTS = CLIENTS or {}
+    CLIENTS[host] = client.Client(interface.get_reapy_server_port(), host.host)
 
 
 if not reapy_boost.is_inside_reaper():
-    connect("localhost")
-    CLIENTS[None] = CLIENT
+    assert Host(IPv4Address(LOCALHOST)) == Host(IPv4Address(LOCALHOST))
+    host = Host(IPv4Address(LOCALHOST))
+    connect(host)
+    # CLIENTS = CLIENTS or {}
+    # CLIENTS[host] = CLIENT

@@ -26,7 +26,7 @@ None
 
 - JulianSader `JS_API` integrated in Python! All the recent functions are automatically generated from the GitHub source and availble in the `reapy_boost.JS` module. They are also statically type-checked and some broken bindings are fixed manually.
 
-- cliffon `ReaImGui` extension is also wrapped in statically typed module and can be used directly from the module `reapy_boost.ImGui`. But I hope to introduce a pythonic gui system, based on theese extension, but without leaking abstractions, so later we can have several back-ends for it. For now it is just a sketch, that works only inside `REAPER` and will be changed before the final release. But even now it look quite better that «pure» `ImGui` example:
+- cliffon `ReaImGui` extension is also wrapped in statically typed module and can be used directly from the module `reapy_boost.ImGui`. But I hope to introduce a pythonic gui system, based on this extension, but without leaking abstractions, so later we can have several back-ends for it. For now it is just a sketch, that works only inside `REAPER` and will be changed before the final release. But even now it look quite better that «pure» `ImGui` example:
 
 ```Python
 from typing import Dict, Generator, Set
@@ -95,6 +95,22 @@ dock_button.state = root.docked
 
 root.run()
 
+```
+
+- changed API for connection to distant machines:
+
+```Python
+import ipaddress
+import reapy_boost
+
+# add Web Interface to Raper freferences at the given location.
+# reapy_boost.add_web_interface("/home/levitanus/.config/REAPER/", 4460)
+
+# Then we can start REAPER, and connect to it with IP and port.
+reapy_boost.connect(
+    reapy_boost.Host(ipaddress.IPv4Address(reapy_boost.LOCALHOST), 4468)
+)
+reapy_boost.test_api()
 ```
 
 ## feel free to contribute!

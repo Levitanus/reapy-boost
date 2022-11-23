@@ -3,13 +3,14 @@ from reapy_boost.tools import json
 from urllib import request
 from urllib.error import URLError
 from socket import timeout
+from ipaddress import IPv4Address
 
-import reapy_boost
+from  reapy_boost.tools.network.client import LOCALHOST
 
 
 class WebInterface:
 
-    def __init__(self, port, host="localhost"):
+    def __init__(self, port:int, host: IPv4Address = IPv4Address(LOCALHOST)):
         self._url = "http://{}:{}/_/".format(host, port)
         self.ext_state = ExtState(self)
 

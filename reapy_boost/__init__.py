@@ -24,24 +24,28 @@ def is_inside_reaper() -> bool:
 from .tools import (
     connect,
     connect_to_default_machine,
+    Host,
+    LOCALHOST,
     dist_api_is_enabled,
     inside_reaper,
     reconnect,
     generate_imgui,
 )
-from . import reascript_api, errors, ImGui
-from .config import configure_reaper
+from . import reascript_api, errors
+from .config import configure_reaper, add_web_interface
 from .core import *
 from .core.reaper import *
 
-__version__ = "0.10.103"
+__version__ = "0.10.2"
 __all__ = [
     "reascript_api",
     "JS",
-    "ImGui",
     "errors",
     # config
     "configure_reaper",
+    "add_web_interface",
+    "Host",
+    "LOCALHOST",
     # core.reapy_object
     "ReapyObject",
     "ReapyObjectList",
