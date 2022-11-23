@@ -120,6 +120,19 @@ class Row(Content):
                 ImGui.SameLine(ctx, x_offset, self.spacing)
 
 
+class TreeNode(Content):
+
+    def __init__(self, name: str, *widgets: Widget) -> None:
+        self.name = name
+        super().__init__(*widgets)
+
+    def frame(self, ctx: ImGuiContext) -> None:
+        if ImGui.TreeNode(ctx, self.name):
+            for widget in self.widgets:
+                widget.frame(ctx)
+            ImGui.TreePop(ctx)
+
+
 class Button(Widget):
 
     def __init__(self, text: str) -> None:
@@ -283,7 +296,7 @@ class Table(Widget):
             rows = self.make_rows(start, end)
             for idx, row in enumerate(rows):
                 ImGui.TableNextRow(ctx)
-                ImGui.PushID(ctx, f"{idx}")
+                ImGui.PushID(ctx, idx)
                 row.frame(ctx)
                 ImGui.PopID(ctx)
 
