@@ -5,12 +5,13 @@ from urllib.error import URLError
 from socket import timeout
 from ipaddress import IPv4Address
 
-from  reapy_boost.tools.network.client import LOCALHOST
+from reapy_boost.tools.network.client import LOCALHOST, normalize_localhost
 
 
 class WebInterface:
 
-    def __init__(self, port:int, host: IPv4Address = IPv4Address(LOCALHOST)):
+    def __init__(self, port: int, host: IPv4Address = IPv4Address(LOCALHOST)):
+        host = normalize_localhost(host)
         self._url = "http://{}:{}/_/".format(host, port)
         self.ext_state = ExtState(self)
 

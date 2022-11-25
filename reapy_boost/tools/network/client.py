@@ -5,12 +5,16 @@ from .socket import Socket
 from ipaddress import IPv4Address, ip_address
 
 LOCALHOST = "127.0.0.1"
-
+def normalize_localhost(host:IPv4Address) -> str:
+    if host == IPv4Address(LOCALHOST):
+        return 'localhost'
+    return str(host)
 
 class Client(Socket):
 
     def __init__(self, port: int, host: IPv4Address = IPv4Address(LOCALHOST)):
         super().__init__()
+        host = normalize_localhost(host)
         self._connect(port, host)
         self.port, self.host = port, host
 
