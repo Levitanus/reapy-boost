@@ -29,11 +29,11 @@ T2 = ty.TypeVar('T2')
 T1 = ty.TypeVar('T1')
 
 
-class CaseInsensitiveDict(OrderedDict[str, T1]):
+class CaseInsensitiveDict(OrderedDict):
     """OrderedDict with case-insensitive keys."""
-    _dict: OrderedDict[str, T1]
+    _dict: OrderedDict
 
-    def __init__(self, *args: T1, **kwargs: T1) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._dict = OrderedDict(*args, **kwargs)
         for key, value in self._dict.items():
@@ -42,10 +42,10 @@ class CaseInsensitiveDict(OrderedDict[str, T1]):
     def __contains__(self, key: str) -> ty.Union[str, bool]:
         return key.lower() in self._dict
 
-    def __getitem__(self, key: str) -> T1:
+    def __getitem__(self, key: str) -> str:
         return self._dict[key.lower()]
 
-    def __setitem__(self, key: str, value: T1) -> None:
+    def __setitem__(self, key: str, value: str) -> None:
         super().__setitem__(key, value)
         self._dict[key.lower()] = value
 
