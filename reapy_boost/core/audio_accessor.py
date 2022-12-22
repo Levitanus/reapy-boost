@@ -70,7 +70,7 @@ class AudioAccessor(ReapyObject):
         return samples
 
     @property
-    def has_state_changed(self) -> float:
+    def has_state_changed(self) -> bool:
         """
         Whether underlying state has changed.
 

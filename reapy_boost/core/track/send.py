@@ -89,7 +89,8 @@ class Send(ReapyObject):
             B_MONO : bool *
             D_VOL : double *, 1.0 = +0dB etc
             D_PAN : double *, -1..+1
-            D_PANLAW : double *,1.0=+0.0db, 0.5=-6dB, -1.0 = projdef etc
+            D_PANLAW : double *,<0=project default, 0.5=-6dB, 0.707..=-3dB, 1=+0dB,
+                1.414..=-3dB with gain compensation, 2=-6dB with gain compensation
             I_SENDMODE : int *, 0=post-fader, 1=pre-fx, 2=post-fx (deprecated),
                                 3=post-fx
             I_AUTOMODE : int * : automation mode (-1=use track automode,

@@ -36,7 +36,7 @@ from .config import configure_reaper, add_web_interface
 from .core import *
 from .core.reaper import *
 
-__version__ = "0.10.2"
+__version__ = "0.10.201"
 __all__ = [
     "reascript_api",
     "JS",
